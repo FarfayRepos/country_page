@@ -111,12 +111,23 @@ export default function InstructorClases() {
     )
   }
 
+  // Resumen del día para el encabezado (clases de hoy, próxima, pendientes).
+  const hoyStr = (() => {
+    const d = new Date(); const p = (n) => String(n).padStart(2, "0")
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+  })()
+  const clasesHoy = (classes || []).filter((c) => c.date === hoyStr && c.status !== "cancelada")
+  const clasesHoyOrden = [...clasesHoy].sort((a, b) => (a.time || "").localeCompare(b.time || ""))
+  const proximaClase = clasesHoyOrden.find((c) => c.status !== "completada" && c.attendance !== "asistió") || clasesHoyOrden[0]
+  const pendientesHoy = clasesHoy.filter((c) => c.status === "pendiente").length
+
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,600;8..144,700&display=swap" rel="stylesheet" />
       
       <div className="dashboard-container-v2">
-        {/* Header */}
+        {/* Header hero oscuro */}
+        <div className="inst-hero">
         <div className="header-v2">
           <div className="header-content">
             <div className="avatar-instructor">
@@ -137,10 +148,27 @@ export default function InstructorClases() {
           <LogoutButton showUserName={false} />
         </div>
 
+        {/* Resumen del día */}
+        <div className="inst-kpis">
+          <button type="button" className="inst-kpi" onClick={() => setActiveView('today')}>
+            <span className="inst-kpi-num">{clasesHoy.length}</span>
+            <span className="inst-kpi-lbl">Clases hoy</span>
+          </button>
+          <button type="button" className="inst-kpi" onClick={() => setActiveView('today')}>
+            <span className="inst-kpi-num">{proximaClase ? proximaClase.time : '—'}</span>
+            <span className="inst-kpi-lbl">Próxima clase</span>
+          </button>
+          <button type="button" className={`inst-kpi ${pendientesHoy > 0 ? 'inst-kpi-alert' : ''}`} onClick={() => setActiveView('today')}>
+            <span className="inst-kpi-num">{pendientesHoy}</span>
+            <span className="inst-kpi-lbl">Pendientes hoy</span>
+          </button>
+        </div>
+        </div>{/* /inst-hero */}
+
         {/* Tabs de vista */}
         <div className="view-tabs">
-          
-          <button 
+
+          <button
             className={`view-tab ${activeView === 'today' ? 'view-tab-active' : ''}`}
             onClick={() => setActiveView('today')}
           >
@@ -278,15 +306,15 @@ export default function InstructorClases() {
                       const getEstadoBadgeColor = (estado) => {
                         switch(estado) {
                           case "confirmada":
-                            return { border: "#7a9d6a", color: "#7a9d6a" }; // Verde más oscuro
+                            return { border: "#3b7a9c", color: "#3b7a9c" }; // Azul petróleo
                           case "pendiente":
-                            return { border: "#c8965a", color: "#c8965a" }; // Beige más oscuro/naranja
+                            return { border: "#c88a2f", color: "#c88a2f" }; // Ámbar (texto legible)
                           case "cancelada":
-                            return { border: "#6b4423", color: "#6b4423" }; // Marrón más oscuro
+                            return { border: "#c17b4a", color: "#c17b4a" }; // Terracota
                           case "completada":
-                            return { border: "#7a9d6a", color: "#7a9d6a" }; // Verde más oscuro
+                            return { border: "#5a7245", color: "#5a7245" }; // Verde salvia oscuro
                           default:
-                            return { border: "#b8653a", color: "#b8653a" }; // Terracotta más oscuro
+                            return { border: "#7d5ba6", color: "#7d5ba6" }; // Morado
                         }
                       };
                       

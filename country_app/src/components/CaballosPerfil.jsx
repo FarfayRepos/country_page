@@ -27,6 +27,18 @@ export default function CaballosPerfil() {
   const [perfil, setPerfil] = useState(null);
   const [perfilLoading, setPerfilLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [hoveredId, setHoveredId] = useState(null);
+
+  // Gradiente del sistema (mismo del hero / pestañas / secciones)
+  const GRAD = "linear-gradient(120deg, #6b4423 0%, #8b5a2b 55%, #c17b4a 100%)";
+  // "avanzado,iniciacion,paseo" → "Avanzado · Iniciacion · Paseo" (con espacios para que envuelva)
+  const formatNivel = (esp) =>
+    (esp || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(" · ") || "—";
 
   useEffect(() => {
     (async () => {
@@ -63,35 +75,81 @@ export default function CaballosPerfil() {
   if (error) return <p style={{ padding: "1rem", color: "#c0392b" }}>{error}</p>;
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <h2 style={{ color: "#6b4423", marginBottom: "0.75rem" }}>Caballos</h2>
-      <input
-        type="text"
-        placeholder="Buscar caballo…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ padding: "0.5rem 0.75rem", borderRadius: 8, border: "1px solid #ccc", marginBottom: "1rem", width: "min(320px, 100%)" }}
-      />
+    <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 8px 24px rgba(74,44,23,0.10)", border: "1px solid #efe7dc", overflow: "hidden" }}>
+      {/* Cabecera degradada (misma identidad que hero / pestañas / tabla) */}
+      <div style={{ background: GRAD, padding: "1.15rem 1.5rem", display: "flex", alignItems: "center", gap: "0.85rem", flexWrap: "wrap" }}>
+        <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
+          🐎
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <h2 style={{ color: "#fff", margin: 0, fontSize: "1.375rem", fontWeight: 700, lineHeight: 1.1 }}>Caballos del club</h2>
+          <span style={{ color: "rgba(255,255,255,0.85)", fontSize: "0.82rem" }}>Perfil, nivel y disponibilidad</span>
+        </div>
+        <span style={{ marginLeft: "auto", background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)", padding: "0.3rem 0.8rem", borderRadius: 9999, fontSize: "0.78rem", fontWeight: 700 }}>
+          {search ? `${filtrados.length} de ${caballos.length}` : `${caballos.length} caballos`}
+        </span>
+      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.85rem" }}>
-        {filtrados.map((c) => (
-          <div
-            key={c.id}
-            onClick={() => abrirPerfil(c)}
-            style={{ background: "#fff", border: "1px solid #e8e0d6", borderRadius: 10, padding: "0.9rem", cursor: "pointer" }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <strong style={{ color: "#6b4423" }}>{c.nombre}</strong>
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: c.disponibilidad === "disponible" ? "#2e7d32" : "#c0392b" }} />
-            </div>
-            <div style={{ marginBottom: 6 }}>{estatusBadge(c.estatus)}</div>
-            <div style={{ fontSize: "0.78rem", color: "#666" }}>Nivel: {c.especialidad || "—"}</div>
-            {c.propietario_nombre && <div style={{ fontSize: "0.76rem", color: "#666" }}>Propietario: {c.propietario_nombre}</div>}
-            {(c.estatus === "renta" || c.estatus === "media_renta") && c.renta_cliente_nombre && (
-              <div style={{ fontSize: "0.76rem", color: "#b8860b" }}>Rentado a: {c.renta_cliente_nombre}</div>
-            )}
-          </div>
-        ))}
+      {/* Cuerpo */}
+      <div style={{ padding: "1.25rem 1.5rem" }}>
+        <input
+          type="text"
+          placeholder="Buscar caballo…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: "0.6rem 0.9rem", borderRadius: 10, border: "1.5px solid #d4c4b0", marginBottom: "1.1rem", width: "min(340px, 100%)", fontSize: "0.9rem", fontFamily: "inherit", outline: "none" }}
+        />
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: "1rem" }}>
+          {filtrados.map((c) => {
+            const disponible = c.disponibilidad === "disponible";
+            const hov = hoveredId === c.id;
+            return (
+              <div
+                key={c.id}
+                onClick={() => abrirPerfil(c)}
+                onMouseEnter={() => setHoveredId(c.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                style={{
+                  background: "#fff",
+                  border: "1px solid #eadfd2",
+                  borderLeft: `4px solid ${disponible ? "#9caf88" : "#c17b4a"}`,
+                  borderRadius: 12,
+                  padding: "0.95rem 1rem",
+                  cursor: "pointer",
+                  transition: "transform 0.16s ease, box-shadow 0.16s ease",
+                  transform: hov ? "translateY(-3px)" : "none",
+                  boxShadow: hov ? "0 8px 20px rgba(74,44,23,0.14)" : "0 1px 3px rgba(74,44,23,0.06)",
+                  minWidth: 0,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <strong style={{ color: "#4a2f17", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.nombre}</strong>
+                  <span
+                    title={disponible ? "Disponible" : "No disponible"}
+                    style={{ width: 11, height: 11, borderRadius: "50%", background: disponible ? "#5a7245" : "#c17b4a", flexShrink: 0, boxShadow: `0 0 0 3px ${disponible ? "rgba(90,114,69,0.15)" : "rgba(193,123,74,0.15)"}` }}
+                  />
+                </div>
+                <div style={{ marginBottom: 8 }}>{estatusBadge(c.estatus)}</div>
+                <div style={{ fontSize: "0.78rem", color: "#6b5c4a", overflowWrap: "anywhere", lineHeight: 1.4 }}>
+                  <span style={{ color: "#a08a6f", fontWeight: 600 }}>Nivel:</span> {formatNivel(c.especialidad)}
+                </div>
+                {c.propietario_nombre && (
+                  <div style={{ fontSize: "0.76rem", color: "#6b5c4a", overflowWrap: "anywhere", marginTop: 2 }}>
+                    <span style={{ color: "#a08a6f", fontWeight: 600 }}>Propietario:</span> {c.propietario_nombre}
+                  </div>
+                )}
+                {(c.estatus === "renta" || c.estatus === "media_renta") && c.renta_cliente_nombre && (
+                  <div style={{ fontSize: "0.76rem", color: "#b8860b", overflowWrap: "anywhere", marginTop: 2 }}>Rentado a: {c.renta_cliente_nombre}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {filtrados.length === 0 && (
+          <p style={{ color: "#8a7c6a", fontSize: "0.9rem", padding: "0.5rem 0" }}>No se encontraron caballos.</p>
+        )}
       </div>
 
       {perfil && (
@@ -107,7 +165,7 @@ export default function CaballosPerfil() {
             <p style={{ margin: "4px 0", fontSize: "0.88rem" }}><strong>Salidas hoy:</strong> {perfilLoading ? "…" : (perfil.salidas_dia ?? "—")}
               {perfil.salidas_dia > 2 && <span style={{ color: "#c0392b", fontWeight: 600 }}> ⚠ Ya salió más de 2 veces</span>}
             </p>
-            <p style={{ margin: "4px 0", fontSize: "0.88rem" }}><strong>Nivel:</strong> {perfil.especialidad || "—"}</p>
+            <p style={{ margin: "4px 0", fontSize: "0.88rem" }}><strong>Nivel:</strong> {formatNivel(perfil.especialidad)}</p>
             {perfil.propietario_nombre && <p style={{ margin: "4px 0", fontSize: "0.88rem" }}><strong>Propietario:</strong> {perfil.propietario_nombre}</p>}
             {(perfil.estatus === "renta" || perfil.estatus === "media_renta") && (
               <p style={{ margin: "4px 0", fontSize: "0.88rem", color: "#b8860b" }}>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockups · Vista Instructor</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,600;8..144,700;8..144,800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --brown:#6b4423; --brown-dark:#4a2f17; --brown-2:#8b5a2b;
+    --terra:#c17b4a; --amber:#e0a458; --sage:#9caf88;
+    --cream:#faf8f5; --line:rgba(107,68,35,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:"Roboto Flex",sans-serif}
+  body{background:var(--cream);color:#3a3a3a;padding:24px;display:flex;flex-direction:column;align-items:center;gap:32px}
+  .phone{width:390px;max-width:100%;display:flex;flex-direction:column;gap:16px}
+  .section-title{font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--brown);margin:8px 4px}
+  .note{font-size:.8rem;color:#8a7c6a;margin:-8px 4px 4px}
+
+  /* Hero */
+  .hero{background:linear-gradient(135deg,var(--brown-dark),var(--brown));border-radius:20px;padding:18px 20px;box-shadow:0 8px 30px rgba(74,44,23,.18);color:#fff}
+  .hero-top{display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.15);padding-bottom:14px;margin-bottom:14px}
+  .avatar{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px}
+  .hero h1{font-size:1.25rem;font-weight:700}
+  .hero p{font-size:.85rem;opacity:.8}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .kpi{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-left:4px solid rgba(255,255,255,.5);border-radius:12px;padding:10px}
+  .kpi.alert{border-left-color:var(--amber)}
+  .kpi .n{font-size:1.4rem;font-weight:800}
+  .kpi.alert .n{color:var(--amber)}
+  .kpi .l{font-size:.66rem;font-weight:600;opacity:.85}
+
+  /* Tabs */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;background:#fff;padding:6px;border-radius:12px;box-shadow:0 2px 8px rgba(107,68,35,.06)}
+  .tab{flex:1;text-align:center;padding:8px 10px;border-radius:8px;font-size:.8rem;font-weight:600;color:#3a3a3a}
+  .tab.active{background:var(--terra);color:#fff;box-shadow:0 2px 8px rgba(193,123,74,.3)}
+
+  /* Card base */
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 8px rgba(107,68,35,.05);overflow:hidden}
+
+  /* Variant A: borde de estado + acción */
+  .a{display:flex;gap:12px;padding:14px;border-left:5px solid var(--sage)}
+  .a.pend{border-left-color:var(--amber)}
+  .a.canc{border-left-color:var(--terra);opacity:.7}
+  .a .time{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:56px;background:var(--cream);border-radius:10px;padding:8px}
+  .a .time b{font-size:1.05rem;color:var(--brown);font-weight:800}
+  .a .time span{font-size:.62rem;color:#8a7c6a}
+  .a .body{flex:1;min-width:0}
+  .a .body .t{font-weight:700;color:#3a3a3a}
+  .a .body .sub{font-size:.8rem;color:#7a6c5a;margin-top:2px}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;background:#f3ede4;color:#5a4d3f;border-radius:999px;padding:2px 8px;margin-top:6px}
+  .a .act{align-self:center}
+  .btn{border:none;border-radius:9px;padding:8px 12px;font-weight:700;font-size:.78rem;cursor:pointer}
+  .btn-terra{background:var(--terra);color:#fff}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--brown)}
+  .badge{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px}
+  .b-ok{background:#e8efe0;color:#5a7245}
+  .b-pend{background:#faecd8;color:#9a6b2f}
+  .b-canc{background:#f7ddd0;color:#b3603a}
+
+  /* Variant B: timeline */
+  .b-wrap{position:relative;padding-left:12px}
+  .tl{display:flex;gap:12px;padding:12px 14px}
+  .tl .hour{min-width:44px;font-weight:800;color:var(--brown);font-size:.95rem;padding-top:2px}
+  .tl .dot{position:relative}
+  .tl .dot::before{content:"";position:absolute;left:-1px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--sage)}
+  .tl.pend .dot::before{background:var(--amber)}
+  .tl .content{flex:1;border-left:2px solid var(--line);padding-left:14px;margin-left:4px}
+  .tl .content .t{font-weight:700}
+  .tl .content .sub{font-size:.8rem;color:#7a6c5a}
+
+  /* Variant C: franja superior de color */
+  .c-strip{height:6px;background:var(--sage)}
+  .c-strip.pend{background:var(--amber)}
+  .c-body{padding:14px}
+  .c-row{display:flex;justify-content:space-between;align-items:center}
+  .c-time{font-size:1.1rem;font-weight:800;color:var(--brown)}
+  .c-meta{display:flex;gap:14px;margin-top:10px;font-size:.82rem;color:#7a6c5a}
+  .c-actions{display:flex;gap:8px;margin-top:12px}
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="section-title">CONTEXTO · HEADER + RESUMEN</div>
+    <div class="hero">
+      <div class="hero-top">
+        <div class="avatar">👤</div>
+        <div><h1>Panel del Instructor</h1><p>Ana Martínez</p></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="n">5</div><div class="l">Clases hoy</div></div>
+        <div class="kpi"><div class="n">10:00</div><div class="l">Próxima</div></div>
+        <div class="kpi alert"><div class="n">2</div><div class="l">Pendientes</div></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active">Hoy</div><div class="tab">Semana</div><div class="tab">Mes</div>
+      <div class="tab">Historial</div><div class="tab">Caballos</div><div class="tab">Dashboard</div>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="section-title">OPCIÓN A · Tarjeta con borde de estado + acción</div>
+    <div class="note">Hora destacada a la izquierda, borde de color por estado, botón de asistencia directo.</div>
+    <div class="card a">
+      <div class="time"><b>09:00</b><span>1 h</span></div>
+      <div class="body">
+        <div class="t">Iniciación <span class="badge b-ok">Confirmada</span></div>
+        <div class="sub">Sofía López · 8 años</div>
+        <span class="chip">🐴 Canela</span>
+      </div>
+      <div class="act"><button class="btn btn-terra">Asistencia</button></div>
+    </div>
+    <div class="card a pend">
+      <div class="time"><b>10:00</b><span>1 h</span></div>
+      <div class="body">
+        <div class="t">Intermedio <span class="badge b-pend">Pendiente</span></div>
+        <div class="sub">Diego Ruiz · 12 años</div>
+        <span class="chip">🐴 Batman · en renta</span>
+      </div>
+      <div class="act"><button class="btn btn-ghost">Asistencia</button></div>
+    </div>
+    <div class="card a canc">
+      <div class="time"><b>11:00</b><span>1 h</span></div>
+      <div class="body">
+        <div class="t">Avanzado <span class="badge b-canc">Cancelada</span></div>
+        <div class="sub">Marta Gil · 15 años</div>
+        <span class="chip">🐴 Sin asignar</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="section-title">OPCIÓN B · Línea de tiempo</div>
+    <div class="note">Hora a la izquierda con punto de estado; densa, ideal para ver el día completo de un vistazo.</div>
+    <div class="card b-wrap">
+      <div class="tl"><div class="hour">09:00</div><div class="dot"></div><div class="content"><div class="t">Iniciación · Sofía López</div><div class="sub">🐴 Canela · 8 años</div></div></div>
+      <div class="tl pend" style="border-top:1px solid var(--line)"><div class="hour">10:00</div><div class="dot"></div><div class="content"><div class="t">Intermedio · Diego Ruiz</div><div class="sub">🐴 Batman · 12 años</div></div></div>
+      <div class="tl" style="border-top:1px solid var(--line)"><div class="hour">16:00</div><div class="dot"></div><div class="content"><div class="t">Avanzado · Marta Gil</div><div class="sub">🐴 Dago · 15 años</div></div></div>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="section-title">OPCIÓN C · Franja de estado + acciones</div>
+    <div class="note">Franja superior de color por estado, datos amplios y acciones grandes. Más "táctil".</div>
+    <div class="card">
+      <div class="c-strip"></div>
+      <div class="c-body">
+        <div class="c-row"><span class="c-time">09:00</span><span class="badge b-ok">Confirmada</span></div>
+        <div style="font-weight:700;margin-top:6px">Iniciación</div>
+        <div class="c-meta"><span>👦 Sofía López · 8</span><span>🐴 Canela</span></div>
+        <div class="c-actions"><button class="btn btn-terra">Asistencia</button><button class="btn btn-ghost">Detalle</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="c-strip pend"></div>
+      <div class="c-body">
+        <div class="c-row"><span class="c-time">10:00</span><span class="badge b-pend">Pendiente</span></div>
+        <div style="font-weight:700;margin-top:6px">Intermedio</div>
+        <div class="c-meta"><span>👦 Diego Ruiz · 12</span><span>🐴 Batman</span></div>
+        <div class="c-actions"><button class="btn btn-terra">Asistencia</button><button class="btn btn-ghost">Detalle</button></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
