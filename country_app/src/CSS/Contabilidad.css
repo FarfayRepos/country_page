@@ -757,6 +757,7 @@
   justify-content: center;
   min-height: 130px;
   padding: 0.35rem 0;
+  flex: 1; /* crece para llenar la tarjeta y centra la gráfica verticalmente */
 }
 
 .home-insight-caption {

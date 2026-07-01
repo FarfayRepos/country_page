@@ -1,0 +1,84 @@
+/* =============================================================
+   Vista de análisis del panel de inicio (InicioAnalisis.jsx).
+   Reutiliza clases de Contabilidad.css (home-*, kpi-card, mini-*)
+   y de DashboardCaballos.css (dc-grid-2, dc-alertas, heatmap).
+   Aquí solo: selector de periodo, badges de variación y titular.
+   ============================================================= */
+
+/* ---- Encabezado con selector de periodo ---- */
+.ia-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.ia-seg {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.ia-seg > button {
+  border: 1px solid rgba(107, 68, 35, 0.2);
+  background: #fff;
+  color: #6b4423;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.ia-seg > button.ia-seg-on {
+  background: #6b4423;
+  color: #fff;
+  border-color: #6b4423;
+}
+.ia-rango {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+.ia-rango input {
+  border: 1px solid rgba(107, 68, 35, 0.2);
+  border-radius: 8px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.82rem;
+}
+
+/* ---- Badge de variación en KPIs ---- */
+.ia-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.ia-delta.ia-good { color: #5a7245; }
+.ia-delta.ia-bad { color: #b3603a; }
+.ia-delta.ia-flat { color: #8a7c6a; }
+
+/* ---- Subtítulo dentro de una tarjeta (p. ej. desglose por horario) ---- */
+.ia-subhead {
+  margin-top: 0.6rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(107, 68, 35, 0.08);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6b4423;
+}
+
+/* Espacio arriba de las barras de horario para que el tooltip no tape el título */
+.ia-hora-chart {
+  padding-top: 1.8rem;
+}
+
+/* ---- Titular de caballos ---- */
+.ia-cab {
+  width: 100%;
+  margin-bottom: 1.1rem;
+}
+.ia-cab-text {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  color: #5a4d3f;
+}
+.ia-cab-text strong { color: #6b4423; }

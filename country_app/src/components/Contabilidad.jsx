@@ -12,10 +12,10 @@ import HorariosPersonalizadosAdmin from "./administrador/HorariosPersonalizadosA
 import BloqueosAdmin from "./administrador/BloqueosAdmin";
 import DisponibilidadHorarios from "./administrador/DisponibilidadHorarios";
 import MetricasResumen from "./administrador/MetricasResumen";
-import MetricasCaballos from "./MetricasCaballos";
+import DashboardCaballos from "./administrador/DashboardCaballos";
 import AjusteEspacios from "./administrador/AjusteEspacios";
 import ErrorBoundary from "./ErrorBoundary";
-import InicioPanel from "./administrador/Inicio_panel";
+import InicioAnalisis from "./administrador/InicioAnalisis";
 import logo from "../img/logo.jpeg";
 
 const MembershipAdminDashboard = () => {
@@ -1145,7 +1145,7 @@ const MembershipAdminDashboard = () => {
 
       {/* CONTENIDO DE INICIO */}
       {activeTab === "inicio" && (
-        <InicioPanel
+        <InicioAnalisis
           headerRef={headerRef}
           currentUser={currentUser}
           totalUsers={totalUsers}
@@ -1159,7 +1159,6 @@ const MembershipAdminDashboard = () => {
           soonCount={soonCount}
           setActiveTab={setActiveTab}
           setShowOverdueFilter={setShowOverdueFilter}
-          openAddClientModal={openAddClientModal}
         />
       )}
 
@@ -1531,7 +1530,7 @@ const MembershipAdminDashboard = () => {
       {activeTab === "metricascab" && (
         <div className="tab-content">
           <ErrorBoundary>
-            <MetricasCaballos />
+            <DashboardCaballos />
           </ErrorBoundary>
         </div>
       )}

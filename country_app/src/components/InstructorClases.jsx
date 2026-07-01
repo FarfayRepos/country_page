@@ -7,7 +7,7 @@ import { AttendanceModal } from "./instructor/atendance-modal"
 import { CancelIndividualModal } from "./instructor/CancelIndividualModal"
 import HorseSelect from "./instructor/HorseSelect"
 import useInstructorDashboard from "./instructor/constants.jsx"
-import MetricasCaballos from "./MetricasCaballos"
+import DashboardCaballos from "./administrador/DashboardCaballos"
 import CaballosPerfil from "./CaballosPerfil"
 import ErrorBoundary from "./ErrorBoundary"
 import LogoutButton from "./LogoutBoton"
@@ -228,7 +228,12 @@ export default function InstructorClases() {
 
         {/* Contenido según la vista activa */}
         {activeView === 'dashboard' ? (
-          <ErrorBoundary><MetricasCaballos /></ErrorBoundary>
+          <ErrorBoundary>
+            <DashboardCaballos
+              scope="instructor"
+              instructoraId={instructoraInfo?.instructora_id || instructoraInfo?.id || null}
+            />
+          </ErrorBoundary>
         ) : activeView === 'caballos' ? (
           <ErrorBoundary><CaballosPerfil /></ErrorBoundary>
         ) : activeView === 'month' ? (
