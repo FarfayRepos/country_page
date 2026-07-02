@@ -7,13 +7,7 @@ import { MiniDonut, MiniHBars, MiniArea, ChartEmpty, Heatmap } from "./MiniChart
 // Dashboard avanzado de métricas de caballos (Fase 1). Consume
 // GET /api/metricas/caballos-avanzado y reutiliza el lenguaje visual del
 // panel de inicio (KPIs + tarjetas con mini-gráficas).
-// En desarrollo apunta al backend local; en producción al dominio.
-const IS_LOCAL =
-  typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1"].includes(window.location.hostname)
-const API = IS_LOCAL
-  ? "http://localhost:3001/api/metricas/caballos-avanzado"
-  : "https://elrefugiocountryclub.com/api/api/metricas/caballos-avanzado"
+const API = "https://elrefugiocountryclub.com/api/api/metricas/caballos-avanzado"
 
 const pct = (n, total) => (total > 0 ? Math.round(((n || 0) / total) * 100) : 0)
 

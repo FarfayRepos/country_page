@@ -11,12 +11,7 @@ import { MiniArea, MiniBars, MiniDonut, MiniHBars, Heatmap, ChartEmpty } from ".
 // Vista de ANÁLISIS del panel de inicio. Consume /api/metricas/inicio-analisis
 // (reservas/servicio con comparación vs. periodo anterior) y combina con las
 // props de clientes/pagos que ya calcula Contabilidad. Sin cifras de dinero.
-const IS_LOCAL =
-  typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1"].includes(window.location.hostname)
-const API = IS_LOCAL
-  ? "http://localhost:3001/api/metricas/inicio-analisis"
-  : "https://elrefugiocountryclub.com/api/api/metricas/inicio-analisis"
+const API = "https://elrefugiocountryclub.com/api/api/metricas/inicio-analisis"
 
 const PALETTE = ["#3b7a9c", "#9caf88", "#e0a458", "#c17b4a", "#7d5ba6"]
 const ESTATUS_COLOR = { confirmada: "#3b7a9c", pendiente: "#e0a458", completada: "#9caf88", cancelada: "#c17b4a" }
