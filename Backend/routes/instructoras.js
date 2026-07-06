@@ -156,9 +156,22 @@ router.get('/clases/:usuario_id', async (req, res) => {
       `, [instructora.instructora_id]);
     }
 
-    // El instructor admin ve TODAS las reservas; el general sólo las suyas.
-    const filtroInstructora = esInstructorAdmin ? '' : 'WHERE r.instructora_id = ?';
-    const paramsClases = esInstructorAdmin ? [] : [instructora.instructora_id];
+    // El instructor admin ve TODAS las reservas.
+    // El instructor general (no admin) sólo ve las clases que PUEDE DAR:
+    // las reservas cuyo tipo de clase coincide con su especialidad (tabla instructora_clase),
+    // además de las que ya tenga asignadas (para no ocultarle una clase de la que es responsable).
+    const filtroInstructora = esInstructorAdmin
+      ? ''
+      : `WHERE (
+          r.instructora_id = ?
+          OR r.clase_id IN (
+            SELECT ic.clase_id FROM instructora_clase ic
+            WHERE ic.instructora_id = ? AND ic.activo = 1
+          )
+        )`;
+    const paramsClases = esInstructorAdmin
+      ? []
+      : [instructora.instructora_id, instructora.instructora_id];
 
     const [clasesRows] = await db.query(`
       SELECT
@@ -226,12 +239,22 @@ router.get('/clases/:usuario_id', async (req, res) => {
       };
     });
 
+    // Tipos de clase que la instructora PUEDE DAR (por su especialidad), fuente canónica: instructora_clase
+    const [especialidadRows] = await db.query(`
+      SELECT c.nombre
+      FROM instructora_clase ic
+      JOIN clases c ON ic.clase_id = c.id
+      WHERE ic.instructora_id = ? AND ic.activo = 1
+    `, [instructora.instructora_id]);
+    const especialidades = especialidadRows.map(r => r.nombre);
+
     res.json({
       instructora: {
         id: instructora.instructora_id,
         nombre: instructora.nombre,
         apellido: instructora.apellido,
-        tipo_instructor: instructora.tipo_instructor || 'general'
+        tipo_instructor: instructora.tipo_instructor || 'general',
+        especialidades // tipos de clase que puede dar, p.ej. ['iniciacion','avanzado']
       },
       clases: clasesFormateadas
     });

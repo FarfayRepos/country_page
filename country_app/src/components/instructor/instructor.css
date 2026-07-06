@@ -449,8 +449,9 @@
 
 /* Tabla de Clases */
 .table-container {
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow-x: scroll;
+  overflow-y: scroll;
+  max-height: 65vh;
   -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 100%;
@@ -461,10 +462,34 @@
   scrollbar-color: var(--primary-brown) var(--soft-gray);
 }
 
+/* Forzar que ambas barras de scroll sean siempre visibles (no overlay que se auto-oculta) */
+.table-container::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.table-container::-webkit-scrollbar-track {
+  background: var(--soft-gray);
+  border-radius: 6px;
+}
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--primary-brown);
+  border-radius: 6px;
+  border: 2px solid var(--soft-gray);
+}
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--charcoal);
+}
+.table-container::-webkit-scrollbar-corner {
+  background: var(--soft-gray);
+}
+
 .classes-table {
   border-collapse: collapse;
   font-size: 0.9375rem;
-  width: 100%;
+  /* Ancho mínimo fijo para que el scroll horizontal esté SIEMPRE activo
+     (la tabla siempre es más ancha que el contenedor) y las columnas no se compriman */
+  width: max-content;
+  min-width: 1600px;
   table-layout: auto;
 }
 
@@ -480,6 +505,10 @@
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.025em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--cream);
 }
 
 .classes-table tbody tr {
@@ -653,13 +682,15 @@
 
   .table-container {
     width: 100%;
-    overflow-x: auto;
+    overflow-x: scroll;
+    overflow-y: scroll;
+    max-height: 65vh;
     -webkit-overflow-scrolling: touch;
     display: block;
   }
-  
+
   .classes-table {
-    min-width: 1200px;
+    min-width: 1600px;
     width: auto;
     display: table;
   }
@@ -762,119 +793,75 @@
     padding: 1rem 1.25rem;
   }
 
-  /* Aplicar el mismo patrón que view-tabs - FORZAR SCROLL */
+  /* En móvil se mantiene la tabla como contenedor scrollable (no tarjetas),
+     con ambas barras de scroll visibles y encabezado fijo */
   .table-container {
-    /* Ancho basado en el contenedor padre (padding de 1rem = 2rem total) */
     width: 100%;
     max-width: 100%;
     overflow-x: scroll;
-    overflow-y: visible;
+    overflow-y: scroll;
+    max-height: 65vh;
     -webkit-overflow-scrolling: touch;
     display: block;
     position: relative;
-    /* Forzar scrollbar visible */
     scrollbar-width: thin;
     scrollbar-color: var(--primary-brown) var(--soft-gray);
-    /* Asegurar que el scroll funcione */
     -ms-overflow-style: scrollbar;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
   }
+  /* Mantener overflow-x scrollable pese al overflow-x:hidden del contenedor padre */
+  .dashboard-container-v2 .table-container {
+    overflow-x: scroll !important;
+  }
 
-  /* --- MOBILE TABLE TO CARDS --- */
+  /* Misma tabla que en escritorio (ancho mínimo fijo → scroll horizontal siempre activo) */
   .classes-table {
-    display: block;
-    width: 100%;
-    border: 0;
-    font-size: 1rem;
-    min-width: unset;
+    display: table;
+    width: max-content;
+    min-width: 1600px;
     table-layout: auto;
-    background: none;
+    font-size: 0.9375rem;
   }
   .classes-table thead {
-    display: none;
+    display: table-header-group;
   }
   .classes-table tbody {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    display: table-row-group;
   }
   .classes-table tbody tr {
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    border-radius: 0.75rem;
-    box-shadow: var(--soft-shadow);
-    padding: 1rem 0.25rem 1rem 0.25rem;
-    border: 1px solid var(--soft-gray);
-    margin-bottom: 0.5rem;
-    position: relative;
-    min-width: 0;
-    overflow: hidden;
+    display: table-row;
   }
   .classes-table tbody td {
-    display: flex;
-    width: 100%;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 0.5rem 0;
-    border: none;
-    background: none;
-    font-size: 1rem;
-    white-space: normal;
-    word-break: break-word;
-    position: relative;
-    text-align: left;
+    display: table-cell;
   }
+  /* Anular las etiquetas de tarjeta (data-label) al volver a formato tabla */
   .classes-table tbody td::before {
-    content: attr(data-label);
-    flex: 0 0 60px;
-    color: var(--secondary-brown);
-    font-weight: 600;
-    margin-right: 0.25rem;
-    font-size: 0.95em;
-    min-width: 40px;
-    text-align: left;
-    opacity: 0.85;
+    display: none;
   }
-  /* Botones ocupan toda la fila */
-  .classes-table tbody td .btn-primary,
-  .classes-table tbody td .btn-attendance {
-    width: 100%;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 1.1em;
-  }
-  /* Mejorar separación visual */
-  .classes-table tbody tr:not(:last-child) {
-    margin-bottom: 1.25rem;
-  }
-  /* Ocultar scroll horizontal */
-  .table-container {
-    overflow-x: hidden !important;
-  }
-  /* Fin mobile cards */
-  
-  /* Scrollbar visible en webkit */
+
+  /* Scrollbars siempre visibles en webkit */
   .table-container::-webkit-scrollbar {
+    width: 12px;
     height: 12px;
     display: block;
     -webkit-appearance: none;
   }
-
   .table-container::-webkit-scrollbar-track {
     background: var(--soft-gray);
     border-radius: 6px;
   }
-
   .table-container::-webkit-scrollbar-thumb {
     background: var(--primary-brown);
     border-radius: 6px;
+    border: 2px solid var(--soft-gray);
   }
-
   .table-container::-webkit-scrollbar-thumb:hover {
     background: var(--dark-brown);
+  }
+  .table-container::-webkit-scrollbar-corner {
+    background: var(--soft-gray);
   }
 }
 

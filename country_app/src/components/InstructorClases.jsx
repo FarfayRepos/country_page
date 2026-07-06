@@ -14,6 +14,17 @@ import LogoutButton from "./LogoutBoton"
 import Toast from "./instructor/Toast"
 import "./instructor/instructor.css"
 
+// Etiquetas legibles para los tipos de clase (los valores coinciden con clases.nombre del backend, en minúscula)
+const CLASS_TYPE_LABELS = {
+  iniciacion: "Iniciación",
+  ponyclub: "Ponyclub",
+  intermedio: "Intermedio",
+  paseo: "Paseo",
+  avanzado: "Avanzado",
+}
+// Orden canónico de todos los tipos de clase
+const ALL_CLASS_TYPES = ["iniciacion", "ponyclub", "intermedio", "paseo", "avanzado"]
+
 export default function InstructorClases() {
   const {
     searchTerm, setSearchTerm,
@@ -121,6 +132,22 @@ export default function InstructorClases() {
   const proximaClase = clasesHoyOrden.find((c) => c.status !== "completada" && c.attendance !== "asistió") || clasesHoyOrden[0]
   const pendientesHoy = clasesHoy.filter((c) => c.status === "pendiente").length
 
+  // Opciones del filtro "Todas las clases":
+  // - Admin: todos los tipos de clase.
+  // - No admin: sólo los tipos que puede dar por su especialidad (instructoraInfo.especialidades del backend).
+  //   Fallback: si el backend aún no envía especialidades, derivar de los tipos presentes en sus clases.
+  const especialidades = Array.isArray(instructoraInfo?.especialidades) ? instructoraInfo.especialidades : []
+  const tiposEnClases = [...new Set((classes || []).map((c) => c.type).filter(Boolean))]
+  let tipoClaseOptions
+  if (esInstructorAdmin) {
+    tipoClaseOptions = ALL_CLASS_TYPES
+  } else if (especialidades.length > 0) {
+    tipoClaseOptions = ALL_CLASS_TYPES.filter((t) => especialidades.includes(t))
+  } else {
+    // Fallback (backend sin especialidades): tipos que aparecen en las clases del instructor
+    tipoClaseOptions = tiposEnClases
+  }
+
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,600;8..144,700&display=swap" rel="stylesheet" />
@@ -227,18 +254,15 @@ export default function InstructorClases() {
               />
             </div>
             <div className="filters-row">
-              <select 
+              <select
                 className="filter-select"
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
               >
                 <option value="all">Todas las clases</option>
-                <option value="Iniciación">Iniciación</option>
-                <option value="Ponyclub">Ponyclub</option>
-                <option value="Salto">Salto</option>
-                <option value="Paseo">Paseo</option>
-                <option value="Intermedio">Intermedio</option>
-                <option value="Avanzado">Avanzado</option>
+                {tipoClaseOptions.map((t) => (
+                  <option key={t} value={t}>{CLASS_TYPE_LABELS[t] || t}</option>
+                ))}
               </select>
               <select 
                 className="filter-select"
@@ -292,6 +316,7 @@ export default function InstructorClases() {
                       {activeView !== 'today' && <th>Fecha</th>}
                       <th>Hora</th>
                       <th>Tipo</th>
+                      {esInstructorAdmin && <th>Instructor</th>}
                       <th>Alumno</th>
                       <th>Edad</th>
                       <th>Caballo</th>
@@ -352,6 +377,11 @@ export default function InstructorClases() {
                         <td>
                           <span className="type-badge">{classItem.type}</span>
                         </td>
+                        {esInstructorAdmin && (
+                          <td>
+                            <span className="student-name">{classItem.instructora_nombre || 'Sin asignar'}</span>
+                          </td>
+                        )}
                         <td>
                           <span className="student-name">{classItem.student}</span>
                         </td>
