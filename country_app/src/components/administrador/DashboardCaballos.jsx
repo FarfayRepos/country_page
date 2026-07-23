@@ -213,7 +213,7 @@ export default function DashboardCaballos({ scope = "admin", instructoraId = nul
           </div>
           <div className="home-insight-chart">
             {tendenciaData.length >= 2
-              ? <MiniArea color="#3b7a9c" data={tendenciaData} />
+              ? <MiniArea color="#3b7a9c" data={tendenciaData} unidad="reservas" />
               : <ChartEmpty loading={false} />}
           </div>
           <p className="home-insight-caption">{isInstructor ? "Tus reservas por semana" : "Reservas por semana en el periodo"}</p>

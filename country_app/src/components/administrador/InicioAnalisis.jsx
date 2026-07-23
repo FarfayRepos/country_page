@@ -90,7 +90,8 @@ export default function InicioAnalisis({
   }
 
   const k = data?.kpis
-  const tendenciaData = (data?.tendencia || []).map((t) => ({ label: fechaLarga(t.dia), value: t.total }))
+  // `shortLabel` va en el eje X (compacto) y `label` en el tooltip.
+  const tendenciaData = (data?.tendencia || []).map((t) => ({ label: fechaLarga(t.dia), shortLabel: ddmm(t.dia), value: t.total }))
   const estatusSegments = (data?.reservas_estatus || []).map((e) => ({
     label: e.estatus.charAt(0).toUpperCase() + e.estatus.slice(1), value: e.total, color: ESTATUS_COLOR[e.estatus] || "#b8a78f",
   }))
@@ -184,7 +185,7 @@ export default function InicioAnalisis({
             <span className="home-insight-title">Tendencia de reservas</span>
           </div>
           <div className="home-insight-chart">
-            {tendenciaData.length >= 2 ? <MiniArea color="#3b7a9c" data={tendenciaData} /> : <ChartEmpty loading={loading} />}
+            {tendenciaData.length >= 2 ? <MiniArea color="#3b7a9c" data={tendenciaData} unidad="reservas" /> : <ChartEmpty loading={loading} />}
           </div>
           <p className="home-insight-caption">Reservas por día en el periodo</p>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect, useLayoutEffect } from "react"
 
 /* =============================================================
    MINI-GRÁFICAS INTERACTIVAS (compartidas)
@@ -173,60 +173,148 @@ export const MiniHBars = ({ data, color }) => {
   )
 }
 
-// Área de tendencia
-export const MiniArea = ({ data, color }) => {
-  const w = 200, h = 70, pad = 8
-  const values = data.map(d => d.value)
-  const max = Math.max(...values, 1)
-  const min = Math.min(...values, 0)
+// Mide el ancho real del contenedor para dibujar el SVG 1:1 (sin deformar).
+const useAnchoContenedor = (ref) => {
+  const [ancho, setAncho] = useState(0)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    setAncho(el.clientWidth)
+  }, [ref])
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof ResizeObserver === "undefined") return
+    const ro = new ResizeObserver(([entry]) => setAncho(Math.round(entry.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ref])
+  return ancho
+}
+
+// Escala "bonita" con base en 0 y un punto medio entero (0 · max/2 · max).
+const escalaY = (maxValor) => {
+  const objetivo = Math.max(maxValor, 1) / 2
+  const mag = Math.pow(10, Math.floor(Math.log10(objetivo)))
+  const n = objetivo / mag
+  const paso = Math.max(1, (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag)
+  return { paso, max: paso * 2 }
+}
+
+// Área de tendencia. Se dibuja a escala real (viewBox = px del contenedor) para
+// que la línea, los puntos y el texto nunca se estiren al cambiar el ancho.
+export const MiniArea = ({ data, color, unidad }) => {
   const ref = useRef(null)
-  const [tip, setTip] = useState(null)
-  const pts = data.map((d, i) => {
-    const x = pad + (i * (w - 2 * pad)) / (data.length - 1 || 1)
-    const y = h - pad - ((d.value - min) / (max - min || 1)) * (h - 2 * pad)
-    return { x, y, d }
-  })
+  const ancho = useAnchoContenedor(ref)
+  const [activo, setActivo] = useState(null)
+
+  const H = 132, padL = 30, padR = 12, padT = 14, padB = 22
+  const w = Math.max(ancho, 180)
+  const plotW = w - padL - padR
+  const plotH = H - padT - padB
+  const { paso, max } = escalaY(Math.max(...data.map(d => d.value), 1))
+  const x = (i) => padL + (i * plotW) / (data.length - 1 || 1)
+  const y = (v) => padT + plotH - (v / max) * plotH
+  const pts = data.map((d, i) => ({ x: x(i), y: y(d.value), d }))
+
   const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")
-  const area = `${line} L${pts[pts.length - 1].x.toFixed(1)},${h} L${pts[0].x.toFixed(1)},${h} Z`
+  const base = padT + plotH
+  const area = `${line} L${pts[pts.length - 1].x.toFixed(1)},${base} L${pts[0].x.toFixed(1)},${base} Z`
   const gid = `miniArea-${color.replace("#", "")}`
-  const show = (e, p) => {
-    const rect = ref.current.getBoundingClientRect()
-    setTip({ x: e.clientX - rect.left, y: e.clientY - rect.top, label: p.d.label, value: p.d.value })
+
+  // Un punto cada N para no amontonar marcas ni etiquetas cuando hay muchos días.
+  const saltoPuntos = Math.ceil(data.length / 24)
+  const corto = (d) => d.shortLabel || d.label
+
+  // Etiquetas del eje X repartidas de forma pareja según el ancho disponible.
+  // Se reservan ~64px por etiqueta e incluye siempre el primer y último día,
+  // descartando cualquiera que quede demasiado pegada a otra ya dibujada.
+  const ultimo = data.length - 1
+  const maxLabels = Math.max(2, Math.min(data.length, Math.floor(plotW / 64) + 1))
+  const idxLabels = []
+  if (data.length === 1) {
+    idxLabels.push(0)
+  } else {
+    for (let k = 0; k < maxLabels; k++) idxLabels.push(Math.round((k * ultimo) / (maxLabels - 1)))
   }
+  const minGap = 52 // px mínimos entre etiquetas para que no se amontonen
+  const labelIdx = [...new Set(idxLabels)]
+    .sort((a, b) => a - b)
+    .filter((i, n, arr) => n === 0 || x(i) - x(arr[n - 1]) >= minGap || i === ultimo)
+    // Si el último quedó pegado al anterior, se elimina el anterior (no el último).
+    .filter((i, n, arr) => !(arr[n + 1] === ultimo && x(ultimo) - x(i) < minGap))
+
+  // Sigue el cursor sobre toda el área: elige el punto más cercano.
+  const seguir = (e) => {
+    const rect = ref.current.getBoundingClientRect()
+    const rel = ((e.clientX - rect.left) - padL) / (plotW || 1)
+    const i = Math.min(data.length - 1, Math.max(0, Math.round(rel * (data.length - 1))))
+    setActivo(i)
+  }
+
+  const sel = activo != null ? pts[activo] : null
+  const tip = sel && {
+    x: Math.min(Math.max(sel.x, 48), w - 48),
+    y: sel.y,
+    label: sel.d.label,
+    value: unidad ? `${sel.d.value} ${unidad}` : sel.d.value,
+  }
+
   return (
-    <div className="mini-area-wrap" ref={ref} onMouseLeave={() => setTip(null)}>
-      <svg viewBox={`0 0 ${w} ${h}`} className="mini-chart-area" preserveAspectRatio="none" role="img">
+    <div className="mini-area-wrap" ref={ref} onMouseLeave={() => setActivo(null)}>
+      <svg width={w} height={H} viewBox={`0 0 ${w} ${H}`} className="mini-chart-area" role="img">
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.28" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.26" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
           </linearGradient>
         </defs>
+
+        {/* Rejilla + escala vertical */}
+        {[0, paso, max].map((v) => (
+          <g key={v}>
+            <line className="area-grid" x1={padL} x2={w - padR} y1={y(v)} y2={y(v)} />
+            <text className="area-axis" x={padL - 7} y={y(v) + 3.5} textAnchor="end">{v}</text>
+          </g>
+        ))}
+
         <path d={area} fill={`url(#${gid})`} className="area-fill" />
         <path
           d={line}
           className="area-line"
           fill="none"
           stroke={color}
-          strokeWidth="2.4"
+          strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
           pathLength="1"
-          vectorEffect="non-scaling-stroke"
         />
+
         {pts.map((p, i) => (
-          <circle
-            key={i}
-            className="area-pt"
-            cx={p.x} cy={p.y} r="6"
-            fill="transparent"
-            onMouseEnter={(e) => show(e, p)}
-            onMouseMove={(e) => show(e, p)}
-          />
+          i % saltoPuntos === 0 || i === pts.length - 1
+            ? <circle key={`d${i}`} cx={p.x} cy={p.y} r="2.6" fill="#fff" stroke={color} strokeWidth="1.8" className="area-dot" />
+            : null
         ))}
-        {pts.map((p, i) => (
-          <circle key={`d${i}`} cx={p.x} cy={p.y} r="2.6" fill={color} className="area-dot" />
+
+        {/* Etiquetas del eje X */}
+        {labelIdx.map((i) => (
+          <text key={`x${i}`} className="area-axis" x={pts[i].x} y={H - 6} textAnchor={i === 0 ? "start" : i === ultimo ? "end" : "middle"}>{corto(pts[i].d)}</text>
         ))}
+
+        {/* Punto activo */}
+        {sel && (
+          <g className="area-hover">
+            <line className="area-cross" x1={sel.x} x2={sel.x} y1={padT} y2={base} stroke={color} />
+            <circle cx={sel.x} cy={sel.y} r="4.5" fill={color} stroke="#fff" strokeWidth="2" />
+          </g>
+        )}
+
+        {/* Capa de captura del cursor */}
+        <rect
+          x={padL - 6} y={padT} width={plotW + 12} height={plotH}
+          fill="transparent"
+          onMouseMove={seguir}
+          onMouseEnter={seguir}
+        />
       </svg>
       {tip && <ChartTooltip tip={tip} />}
     </div>
