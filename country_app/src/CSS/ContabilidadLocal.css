@@ -26,10 +26,58 @@
   font-weight: 600;
 }
 
-/* Tabla */
+/* Tabla
+   NOTA: esta clase también se usa en Contabilidad.css (vista /contabilidad),
+   donde está scopeada bajo .cl-lista. Aquí el wrapper debe scrollear en
+   horizontal, no recortar: con `overflow: hidden` las columnas quedaban
+   inalcanzables en pantallas angostas. */
 .cl-table-wrap {
-  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
   border-radius: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--terracotta) rgba(107, 68, 35, 0.08);
+}
+
+.cl-table-wrap::-webkit-scrollbar {
+  height: 10px;
+  -webkit-appearance: none;
+}
+
+.cl-table-wrap::-webkit-scrollbar-track {
+  background: rgba(107, 68, 35, 0.06);
+  border-radius: 999px;
+}
+
+.cl-table-wrap::-webkit-scrollbar-thumb {
+  background: var(--terracotta);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Sin min-width la tabla se encoge al 100% y nunca desborda:
+   sin desbordamiento no hay scroll posible. */
+.cl-table-wrap .members-table {
+  min-width: 980px;
+}
+
+.cl-table-wrap .members-table:has(.cl-empty-cell) {
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .cl-table-wrap .members-table {
+    min-width: 860px;
+  }
+
+  .cl-table-wrap::-webkit-scrollbar {
+    height: 12px;
+  }
 }
 
 .cl-empty-cell {

@@ -485,7 +485,7 @@ router.post('/register-cliente', async (req, res) => {
 // Editar correo del usuario
 router.patch('/update-email/:id', async (req, res) => {
   const { id } = req.params;
-  const { email } = req.body;
+  const { email, enviarCredenciales } = req.body;
 
   // Validar que el email esté presente y tenga un formato válido
   if (!email) {
@@ -497,17 +497,60 @@ router.patch('/update-email/:id', async (req, res) => {
     return res.status(400).json({ error: 'El formato del email no es válido' });
   }
 
+  const nuevoCorreo = email.trim();
+
   try {
-    const [result] = await db.query(
-      "UPDATE usuarios SET correo=? WHERE id=?",
-      [email, id]
+    // Verificar que el usuario exista y traer sus datos para el posible reenvío
+    const [userRows] = await db.query(
+      "SELECT id, nombre, apellido, correo, username, contrasena, rol FROM usuarios WHERE id=?",
+      [id]
     );
 
-    if (result.affectedRows === 0) {
+    if (userRows.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    res.json({ message: 'Correo actualizado correctamente' });
+    // Evitar asignar un correo que ya pertenece a otro usuario
+    const [duplicados] = await db.query(
+      "SELECT id FROM usuarios WHERE correo=? AND id<>?",
+      [nuevoCorreo, id]
+    );
+
+    if (duplicados.length > 0) {
+      return res.status(409).json({ error: 'El email ya está en uso por otro usuario' });
+    }
+
+    await db.query(
+      "UPDATE usuarios SET correo=? WHERE id=?",
+      [nuevoCorreo, id]
+    );
+
+    const user = userRows[0];
+    let credencialesEnviadas = false;
+
+    // Reenviar las credenciales al nuevo correo si el admin lo solicitó
+    if (enviarCredenciales) {
+      try {
+        await axios.post('https://elrefugiocountryclub.com/api/api/email/send-credentials', {
+          email: nuevoCorreo,
+          nombre: `${user.nombre} ${user.apellido || ''}`.trim(),
+          username: user.username,
+          password: user.contrasena,
+          rol: user.rol
+        });
+        credencialesEnviadas = true;
+        console.log(`✅ Credenciales reenviadas al nuevo correo: ${nuevoCorreo}`);
+      } catch (emailError) {
+        console.error(`⚠️ Error al reenviar credenciales a ${nuevoCorreo}:`, emailError.message);
+        // No bloquear la respuesta si falla el email
+      }
+    }
+
+    res.json({
+      message: 'Correo actualizado correctamente',
+      email: nuevoCorreo,
+      credencialesEnviadas
+    });
   } catch (err) {
     console.error('Error al actualizar correo:', err);
 
@@ -517,6 +560,55 @@ router.patch('/update-email/:id', async (req, res) => {
     }
 
     res.status(500).json({ error: 'Error al actualizar correo' });
+  }
+});
+
+// Reenviar las credenciales de acceso al correo del usuario
+router.post('/resend-credentials/:id', async (req, res) => {
+  const { id } = req.params;
+  const { email } = req.body || {};
+
+  try {
+    const [userRows] = await db.query(
+      "SELECT id, nombre, apellido, correo, username, contrasena, rol FROM usuarios WHERE id=?",
+      [id]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const user = userRows[0];
+
+    // Se puede enviar a un correo puntual; por defecto se usa el registrado
+    const destino = (email || user.correo || '').trim();
+
+    if (!destino) {
+      return res.status(400).json({ error: 'El usuario no tiene un correo registrado' });
+    }
+
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!emailRegex.test(destino)) {
+      return res.status(400).json({ error: 'El formato del email no es válido' });
+    }
+
+    if (!user.username || !user.contrasena) {
+      return res.status(400).json({ error: 'El usuario no tiene credenciales generadas' });
+    }
+
+    await axios.post('https://elrefugiocountryclub.com/api/api/email/send-credentials', {
+      email: destino,
+      nombre: `${user.nombre} ${user.apellido || ''}`.trim(),
+      username: user.username,
+      password: user.contrasena,
+      rol: user.rol
+    });
+
+    console.log(`✅ Credenciales reenviadas a: ${destino}`);
+    res.json({ message: 'Credenciales reenviadas correctamente', email: destino });
+  } catch (err) {
+    console.error('Error al reenviar credenciales:', err.message);
+    res.status(500).json({ error: 'Error al reenviar las credenciales' });
   }
 });
 

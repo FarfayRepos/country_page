@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import ReactDOM from "react-dom"
 import "../CSS/Contabilidad.css"
 import LogoutButton from './LogoutBoton'
-import { UserPlus, Eye, XCircle, CheckCircle, Loader, Search, History, AlertTriangle, Clock, AlertCircle, Edit, Copy, ChevronLeft, ChevronRight, Users, UserCheck, UserX, PawPrint, GraduationCap, CalendarDays, CalendarPlus, Ban, CalendarCheck, LayoutGrid, BarChart3, Home, ArrowRight, Bell } from "lucide-react"
+import { UserPlus, Eye, XCircle, CheckCircle, Loader, Search, History, AlertTriangle, Clock, AlertCircle, Edit, Copy, ChevronLeft, ChevronRight, Users, UserCheck, UserX, PawPrint, GraduationCap, CalendarDays, CalendarPlus, Ban, CalendarCheck, LayoutGrid, BarChart3, Home, ArrowRight, Bell, Mail, Send } from "lucide-react"
 import useRoleGuard from '../hooks/useRoleGuard';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import CaballosAdmin from "./CaballosAdmin";
@@ -76,6 +76,13 @@ const MembershipAdminDashboard = () => {
   })
   const [previewEdited, setPreviewEdited] = useState(false)
   const [activeTab, setActiveTab] = useState("inicio")
+  // Edición de correo y reenvío de credenciales
+  const [emailModalOpen, setEmailModalOpen] = useState(false)
+  const [emailMember, setEmailMember] = useState(null)
+  const [emailValue, setEmailValue] = useState("")
+  const [resendOnEmailSave, setResendOnEmailSave] = useState(true)
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [resendingId, setResendingId] = useState(null)
 
   // Refs para controlar foco y autofill
   const searchRef = useRef(null)
@@ -1058,6 +1065,109 @@ const MembershipAdminDashboard = () => {
     }
   }
 
+  // ===== Correo del cliente y credenciales =====
+  const openEmailModal = (member) => {
+    setEmailMember(member)
+    setEmailValue(member.email || "")
+    setResendOnEmailSave(true)
+    setEmailModalOpen(true)
+  }
+
+  const closeEmailModal = () => {
+    setEmailModalOpen(false)
+    setEmailMember(null)
+    setEmailValue("")
+    setSavingEmail(false)
+  }
+
+  const saveMemberEmail = async () => {
+    if (!emailMember) return
+
+    const nuevoCorreo = emailValue.trim()
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
+    if (!nuevoCorreo) {
+      showNotification("Ingresa un correo electrónico", "error")
+      return
+    }
+
+    if (!emailRegex.test(nuevoCorreo)) {
+      showNotification("El formato del correo no es válido", "error")
+      return
+    }
+
+    setSavingEmail(true)
+    try {
+      const response = await fetch(
+        `https://elrefugiocountryclub.com/api/api/users/update-email/${emailMember.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: nuevoCorreo, enviarCredenciales: resendOnEmailSave }),
+        },
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.ok) {
+        setMembers((prev) =>
+          prev.map((m) => (m.id === emailMember.id ? { ...m, email: nuevoCorreo } : m)),
+        )
+        closeEmailModal()
+        showNotification(
+          resendOnEmailSave && data?.credencialesEnviadas
+            ? "Correo actualizado y credenciales enviadas al nuevo correo"
+            : resendOnEmailSave
+              ? "Correo actualizado, pero no se pudo enviar el email de credenciales"
+              : "Correo actualizado correctamente",
+          resendOnEmailSave && !data?.credencialesEnviadas ? "error" : "success",
+        )
+      } else {
+        showNotification("Error al actualizar el correo: " + (data?.error ?? "Error desconocido"), "error")
+        setSavingEmail(false)
+      }
+    } catch {
+      showNotification("Error de conexión. Inténtalo de nuevo.", "error")
+      setSavingEmail(false)
+    }
+  }
+
+  const resendCredentials = async (member) => {
+    if (!member.email) {
+      showNotification("El cliente no tiene correo registrado. Edítalo primero.", "error")
+      return
+    }
+
+    const confirmar = window.confirm(
+      `¿Reenviar las credenciales de acceso a ${member.email}?`,
+    )
+    if (!confirmar) return
+
+    setResendingId(member.id)
+    try {
+      const response = await fetch(
+        `https://elrefugiocountryclub.com/api/api/users/resend-credentials/${member.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        },
+      )
+
+      const data = await response.json().catch(() => ({}))
+
+      if (response.ok) {
+        showNotification(`Credenciales reenviadas a ${data?.email || member.email}`, "success")
+      } else {
+        showNotification("Error al reenviar credenciales: " + (data?.error ?? "Error desconocido"), "error")
+      }
+    } catch {
+      showNotification("Error de conexión. Inténtalo de nuevo.", "error")
+    } finally {
+      setResendingId(null)
+    }
+  }
+
   const isPaymentExpired = (paymentDate) => {
     const today = new Date()
     const payment = new Date(paymentDate)
@@ -1395,6 +1505,7 @@ const MembershipAdminDashboard = () => {
                             {formatDate(member.proximaFecha) || "-"}
                           </td>
                           <td>
+                            <div className="cl-acciones">
                             <button
                               className="btn history-btn"
                               onClick={() => openPaymentHistoryModal(member)}
@@ -1420,6 +1531,38 @@ const MembershipAdminDashboard = () => {
                                 ) : null
                               })()}
                             </button>
+
+                            <button
+                              className="btn email-btn"
+                              onClick={() => openEmailModal(member)}
+                              type="button"
+                              title={member.email ? `Editar correo (${member.email})` : "Registrar correo"}
+                            >
+                              <Mail size={16} /> {member.email ? "Editar correo" : "Agregar correo"}
+                            </button>
+
+                            <button
+                              className="btn resend-btn"
+                              onClick={() => resendCredentials(member)}
+                              type="button"
+                              disabled={!member.email || resendingId === member.id}
+                              title={
+                                member.email
+                                  ? `Reenviar credenciales a ${member.email}`
+                                  : "El cliente no tiene correo registrado"
+                              }
+                            >
+                              {resendingId === member.id ? (
+                                <>
+                                  <Loader size={16} className="spin" /> Enviando...
+                                </>
+                              ) : (
+                                <>
+                                  <Send size={16} /> Reenviar credenciales
+                                </>
+                              )}
+                            </button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -1591,6 +1734,63 @@ const MembershipAdminDashboard = () => {
                 </button>
                 <button className="btn" onClick={closeModal} type="button">
                   Cerrar
+                </button>
+              </div>
+            </div>
+          </div>,
+        )}
+
+      {/* MODAL EDITAR CORREO (Portal) */}
+      {emailModalOpen &&
+        emailMember &&
+        renderPortal(
+          <div className="modal-overlay" onClick={closeEmailModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h2>Correo de {emailMember.name}</h2>
+
+              <div className="modal-info-box">
+                Actualiza el correo del cliente. Si marcas la casilla, se le enviaran sus credenciales
+                de acceso (usuario y contrasena actuales) al correo indicado.
+              </div>
+
+              <div className="modal-field">
+                <label>Correo electrónico:</label>
+                <input
+                  type="email"
+                  value={emailValue}
+                  onChange={(e) => setEmailValue(e.target.value)}
+                  placeholder="cliente@correo.com"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  data-form-type="other"
+                />
+              </div>
+
+              <label className="modal-checkbox">
+                <input
+                  type="checkbox"
+                  checked={resendOnEmailSave}
+                  onChange={(e) => setResendOnEmailSave(e.target.checked)}
+                />
+                Enviar las credenciales a este correo
+              </label>
+
+              <div className="modal-actions">
+                <button className="btn" onClick={saveMemberEmail} type="button" disabled={savingEmail}>
+                  {savingEmail ? (
+                    <>
+                      <Loader size={16} className="spin" /> Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={16} /> Guardar
+                    </>
+                  )}
+                </button>
+                <button className="btn" onClick={closeEmailModal} type="button" disabled={savingEmail}>
+                  Cancelar
                 </button>
               </div>
             </div>

@@ -4209,11 +4209,22 @@ body.no-scroll {
     min-width: unset;
   }
 
-  .tab-content-visible .btn.history-btn {
+  .tab-content-visible .btn.history-btn,
+  .tab-content-visible .btn.email-btn,
+  .tab-content-visible .btn.resend-btn {
     min-height: 44px;
     padding: 0.6rem 1rem;
     font-size: 0.82rem;
     overflow: visible;
+  }
+
+  .tab-content-visible .cl-acciones {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tab-content-visible .cl-acciones .btn {
+    justify-content: center;
   }
 
   .controls-filter-select {
@@ -5416,13 +5427,52 @@ body.no-scroll {
   opacity: 0.6;
 }
 
-/* Tabla */
-.cl-table-wrap {
+/* Tabla
+   OJO: .cl-table-wrap también está definido en ContabilidadLocal.css con
+   `overflow: hidden` y ese archivo se carga DESPUÉS en el bundle. Por eso
+   todas las reglas del wrapper van scopeadas bajo .cl-lista (especificidad
+   0,2,0), que solo existe en esta vista y gana sin depender del orden. */
+.cl-lista .cl-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  /* El scroll horizontal vive AQUÍ: la tabla tiene min-width, así que
+     siempre que no quepa aparece la barra en lugar de aplastar columnas */
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--terracotta) rgba(107, 68, 35, 0.08);
 }
 
-.cl-table {
+/* Barra siempre visible (macOS la oculta por defecto y parece que no hay scroll) */
+.cl-lista .cl-table-wrap::-webkit-scrollbar {
+  height: 10px;
+  -webkit-appearance: none;
+}
+
+.cl-lista .cl-table-wrap::-webkit-scrollbar-track {
+  background: rgba(107, 68, 35, 0.06);
+  border-radius: 999px;
+}
+
+.cl-lista .cl-table-wrap::-webkit-scrollbar-thumb {
+  background: var(--terracotta);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.cl-lista .cl-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-brown);
+  background-clip: content-box;
+}
+
+.cl-lista .cl-table {
   width: 100%;
+  /* Ancho mínimo para que las 8 columnas sean legibles; por debajo de esto
+     el wrapper hace scroll en vez de comprimir el contenido */
+  min-width: 1180px;
   border-collapse: collapse;
 }
 
@@ -5445,7 +5495,83 @@ body.no-scroll {
   text-align: left;
 }
 
-.cl-empty-cell {
+/* Botonera de la columna Acciones */
+.cl-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cl-acciones .btn {
+  margin-right: 0;
+}
+
+.btn.email-btn,
+.btn.resend-btn {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.btn.email-btn {
+  background: #fff;
+  color: var(--primary-brown);
+  border: 1px solid rgba(107, 68, 35, 0.25);
+  box-shadow: none;
+}
+
+.btn.email-btn:hover {
+  background: #faf8f5;
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
+.btn.resend-btn {
+  background: linear-gradient(135deg, var(--terracotta), var(--primary-brown));
+  color: #fff;
+  border: none;
+  box-shadow: 0 1px 4px rgba(193, 123, 74, 0.25);
+}
+
+.btn.resend-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 3px 10px rgba(193, 123, 74, 0.32);
+}
+
+.btn.resend-btn:disabled {
+  background: #e8e0d6;
+  color: #9a8c7c;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn.resend-btn:disabled:hover {
+  transform: none;
+  filter: none;
+  box-shadow: none;
+}
+
+/* Checkbox dentro de modales */
+.modal-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 1rem;
+  font-size: 0.85rem;
+  color: var(--secondary-brown);
+  cursor: pointer;
+}
+
+.modal-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Scopeado: ContabilidadLocal.css redefine .cl-empty-cell y se carga después */
+.cl-lista .cl-empty-cell {
   text-align: center;
   padding: 4rem;
   color: var(--stone-gray);
@@ -5465,6 +5591,81 @@ body.no-scroll {
   font-size: 0.88rem;
   color: var(--charcoal);
   vertical-align: middle;
+}
+
+/* Estado vacío / cargando: sin filas reales no tiene sentido forzar el
+   ancho mínimo ni mostrar scroll. Especificidad (0,3,0) para ganarle
+   también a los min-width de las media queries de abajo. */
+.cl-lista .cl-table .cl-empty-cell {
+  white-space: normal;
+}
+
+.cl-lista .cl-table:has(.cl-empty-cell) {
+  min-width: 0;
+}
+
+/* --------------------------------------------
+   CLIENTES — RESPONSIVE (la tabla siempre scrollea)
+   -------------------------------------------- */
+@media (max-width: 1400px) {
+  .cl-lista .cl-table th,
+  .cl-lista .cl-table td {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .cl-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cl-btn-nuevo {
+    justify-content: center;
+  }
+
+  .cl-search-wrap {
+    max-width: none;
+  }
+
+  .cl-filtros {
+    padding: 0.85rem 1rem;
+  }
+
+  .cl-filtros > * {
+    flex: 1 1 160px;
+  }
+
+  .cl-summary {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .cl-lista .cl-table {
+    min-width: 1040px;
+  }
+
+  .cl-lista .cl-table th,
+  .cl-lista .cl-table td {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .cl-lista .cl-table {
+    min-width: 900px;
+  }
+
+  .cl-lista .cl-table td {
+    font-size: 0.84rem;
+  }
+
+  /* Barra de scroll más gruesa para poder arrastrarla con el dedo */
+  .cl-lista .cl-table-wrap::-webkit-scrollbar {
+    height: 12px;
+  }
 }
 
 /* ============================================
@@ -5623,12 +5824,52 @@ body.no-scroll {
 
 /* Tabla */
 .inst-table-wrap {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--terracotta) rgba(107, 68, 35, 0.08);
+}
+
+.inst-table-wrap::-webkit-scrollbar {
+  height: 10px;
+  -webkit-appearance: none;
+}
+
+.inst-table-wrap::-webkit-scrollbar-track {
+  background: rgba(107, 68, 35, 0.06);
+  border-radius: 999px;
+}
+
+.inst-table-wrap::-webkit-scrollbar-thumb {
+  background: var(--terracotta);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.inst-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-brown);
+  background-clip: content-box;
 }
 
 .instructoras-admin-container .inst-table {
   width: 100%;
+  min-width: 1040px;
   border-collapse: collapse;
+}
+
+@media (max-width: 560px) {
+  .instructoras-admin-container .inst-table {
+    min-width: 880px;
+  }
+
+  .inst-table-wrap::-webkit-scrollbar {
+    height: 12px;
+  }
 }
 
 .instructoras-admin-container .inst-table thead tr {
@@ -5648,6 +5889,10 @@ body.no-scroll {
 
 .instructoras-admin-container .inst-th-acciones {
   text-align: center;
+}
+
+.instructoras-admin-container .inst-table:has(.inst-empty-cell) {
+  min-width: 0;
 }
 
 .instructoras-admin-container .inst-empty-cell {
