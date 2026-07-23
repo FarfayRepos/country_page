@@ -292,8 +292,12 @@ const MetricasResumen = () => {
             {/* Instructoras */}
             <SectionCard title="Desempeno de Instructoras" badge="Productividad" badgeColor={C.brown} icon={Users}>
               <div className="metricas-inst-list">
-                {metricas.metricas_instructores?.map((inst, idx) => {
-                  const maxClases = metricas.metricas_instructores[0]?.total_clases || 1;
+                {(() => {
+                  const instructoresActivos = metricas.metricas_instructores?.filter(
+                    (inst) => inst.disponibilidad === 'disponible' || inst.disponibilidad === 'descanso'
+                  ) ?? [];
+                  return instructoresActivos.map((inst, idx) => {
+                  const maxClases = instructoresActivos[0]?.total_clases || 1;
                   const pct       = Math.round((inst.total_clases / maxClases) * 100);
                   const color     = INST_COLORS[idx % INST_COLORS.length];
                   const esActivo  = inst.disponibilidad === 'disponible';
@@ -351,8 +355,11 @@ const MetricasResumen = () => {
                       )}
                     </div>
                   );
-                })}
-                {!metricas.metricas_instructores?.length && (
+                  });
+                })()}
+                {!metricas.metricas_instructores?.filter(
+                  (inst) => inst.disponibilidad === 'disponible' || inst.disponibilidad === 'descanso'
+                ).length && (
                   <div className="metricas-inst-empty">Sin datos en este periodo.</div>
                 )}
               </div>
