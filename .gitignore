@@ -9,6 +9,14 @@ yarn-error.log*
 dist/
 build/
 
+#documentos
+country_page/docs/api.docx
+country_page/docs/api.md
+country_page/docs/database.docx
+country_page/docs/database.md
+country_page/docs/frontend.md
+country_page/docs/vps-deploy.md
+
 # Environment variables
 .env
 .env.local

@@ -22,6 +22,31 @@ ls          # Backend/  country_app/  node_modules/  ...
 
 ---
 
+## Traer los últimos cambios (git pull)
+
+Antes de compilar, hay que bajar el código actualizado desde el repositorio. Esto se hace desde la raíz del proyecto.
+
+```bash
+cd /root/country_page
+
+# Ver en qué rama estás y si hay cambios locales
+git status
+
+# Bajar los últimos cambios de la rama de trabajo
+git pull origin Modificaciones-back
+```
+
+**Si `git pull` da error por cambios locales en el VPS** (archivos modificados a mano), descártalos primero — normalmente en el servidor no debería haber cambios propios:
+
+```bash
+git checkout -- .   # descarta cambios en archivos ya versionados
+git pull origin Modificaciones-back
+```
+
+Después de hacer `git pull`, continúa con el build del frontend o el reinicio del backend según lo que haya cambiado.
+
+---
+
 ## Actualizar el Frontend
 
 El frontend es una app Vite/React. Al hacer build se genera la carpeta `dist/` que Nginx sirve directamente.
