@@ -3,7 +3,6 @@
 // El formulario, la tabla, la API y los helpers viven en ./registro/.
 import React, { useCallback, useMemo, useState } from "react";
 import { AlertCircle, Loader, UserPlus, Users } from "lucide-react";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../CSS/AdminPanel.css";
 import "../CSS/RegistroUsuarios.css";
@@ -42,8 +41,8 @@ const GestionUsuarios = () => {
 
   return (
     <div className="admin-container registro-container">
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
-
+      {/* El ToastContainer se monta una sola vez en App.jsx: tener otro aquí
+          hacía que cada aviso se mostrara duplicado. */}
       <div className="admin-logout">
         <LogoutButton
           userName="Admin"

@@ -5532,11 +5532,26 @@ body.no-scroll {
 }
 
 .btn.email-btn,
-.btn.resend-btn {
+.btn.resend-btn,
+.btn.delete-btn {
   padding: 0.5rem 0.9rem;
   font-size: 0.8rem;
   border-radius: 8px;
   white-space: nowrap;
+}
+
+/* Eliminar cuenta: contorno rojo, se rellena al pasar el cursor */
+.btn.delete-btn {
+  background: #fff;
+  color: #c0392b;
+  border: 1px solid #c0392b;
+  box-shadow: none;
+}
+
+.btn.delete-btn:hover {
+  background: #c0392b;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(192, 57, 43, 0.28);
 }
 
 .btn.email-btn {

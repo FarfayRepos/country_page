@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import ReactDOM from "react-dom"
 import "../CSS/Contabilidad.css"
 import LogoutButton from './LogoutBoton'
-import { UserPlus, Eye, XCircle, CheckCircle, Loader, Search, History, AlertTriangle, Clock, AlertCircle, Edit, Copy, ChevronLeft, ChevronRight, Users, UserCheck, UserX, PawPrint, GraduationCap, CalendarDays, CalendarPlus, Ban, CalendarCheck, LayoutGrid, BarChart3, Home, ArrowRight, Bell, Mail, Send } from "lucide-react"
+import { UserPlus, Eye, XCircle, CheckCircle, Loader, Search, History, AlertTriangle, Clock, AlertCircle, Edit, Copy, ChevronLeft, ChevronRight, Users, UserCheck, UserX, PawPrint, GraduationCap, CalendarDays, CalendarPlus, Ban, CalendarCheck, LayoutGrid, BarChart3, Home, ArrowRight, Bell, Mail, Send, Trash2 } from "lucide-react"
+import ModalEliminarUsuario from "./registro/ModalEliminarUsuario";
 import useRoleGuard from '../hooks/useRoleGuard';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import CaballosAdmin from "./CaballosAdmin";
@@ -83,6 +84,8 @@ const MembershipAdminDashboard = () => {
   const [resendOnEmailSave, setResendOnEmailSave] = useState(true)
   const [savingEmail, setSavingEmail] = useState(false)
   const [resendingId, setResendingId] = useState(null)
+  // Cliente cuya cuenta se está por eliminar (null = modal cerrado)
+  const [memberToDelete, setMemberToDelete] = useState(null)
 
   // Refs para controlar foco y autofill
   const searchRef = useRef(null)
@@ -1562,6 +1565,15 @@ const MembershipAdminDashboard = () => {
                                 </>
                               )}
                             </button>
+
+                            <button
+                              className="btn delete-btn"
+                              onClick={() => setMemberToDelete(member)}
+                              type="button"
+                              title="Eliminar cuenta"
+                            >
+                              <Trash2 size={16} /> Eliminar
+                            </button>
                             </div>
                           </td>
                         </tr>
@@ -2515,6 +2527,22 @@ const MembershipAdminDashboard = () => {
               </button>
             </div>
           </div>
+        )}
+
+      {/* ELIMINAR CUENTA — mismo modal que la vista de Gestión de Usuarios.
+          Va por portal, igual que el resto de modales de esta pantalla. */}
+      {memberToDelete &&
+        renderPortal(
+          <ModalEliminarUsuario
+            usuario={{
+              id: memberToDelete.id,
+              nombreCompleto: memberToDelete.name,
+              correo: memberToDelete.email,
+              rol: memberToDelete.rol,
+            }}
+            onCerrar={() => setMemberToDelete(null)}
+            onCompletado={() => refreshUsersList(true)}
+          />
         )}
     </div>
   )

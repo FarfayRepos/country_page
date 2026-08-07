@@ -4,6 +4,7 @@ import { AlertTriangle, Loader, Trash2, UserX, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { cambiarEstatusUsuario, eliminarUsuario } from "./registroApi";
 import { TOAST_OPTS } from "./constants";
+import "../../CSS/ModalEliminarUsuario.css";
 
 /**
  * Confirmación de borrado de cuenta.
@@ -11,12 +12,20 @@ import { TOAST_OPTS } from "./constants";
  * Si el backend responde que la cuenta tiene historial (409) no se elimina
  * nada: el modal pasa a mostrar el detalle y ofrece desactivarla, que es la
  * alternativa segura para no dejar reservas ni pagos huérfanos.
+ *
+ * `usuario` admite dos formas, porque lo usan dos vistas con datos distintos:
+ *   { id, nombre, apellido, username, correo, rol }   → Gestión de Usuarios
+ *   { id, nombreCompleto, correo, rol }               → panel de Administración
+ * Los campos que falten simplemente no se muestran.
  */
 const ModalEliminarUsuario = ({ usuario, onCerrar, onCompletado }) => {
   const [procesando, setProcesando] = useState(false);
   const [bloqueo, setBloqueo] = useState(null);
 
-  const nombreCompleto = `${usuario.nombre || ""} ${usuario.apellido || ""}`.trim();
+  const nombreCompleto =
+    usuario.nombreCompleto ||
+    `${usuario.nombre || ""} ${usuario.apellido || ""}`.trim() ||
+    `Usuario #${usuario.id}`;
 
   const handleEliminar = useCallback(async () => {
     setProcesando(true);
@@ -81,17 +90,25 @@ const ModalEliminarUsuario = ({ usuario, onCerrar, onCompletado }) => {
             <h3 className="modal-titulo">¿Eliminar esta cuenta?</h3>
             <p className="modal-texto">
               Se eliminará permanentemente la cuenta de{" "}
-              <strong>{nombreCompleto}</strong> (<code>{usuario.username}</code>).
-              Esta acción no se puede deshacer.
+              <strong>{nombreCompleto}</strong>
+              {usuario.username && (
+                <>
+                  {" "}
+                  (<code>{usuario.username}</code>)
+                </>
+              )}
+              . Esta acción no se puede deshacer.
             </p>
 
             <div className="modal-datos">
               <span>
                 ID <strong>#{usuario.id}</strong>
               </span>
-              <span>
-                Rol <strong>{usuario.rol}</strong>
-              </span>
+              {usuario.rol && (
+                <span>
+                  Rol <strong>{usuario.rol}</strong>
+                </span>
+              )}
               <span>
                 Correo <strong>{usuario.correo || "sin correo"}</strong>
               </span>
@@ -114,7 +131,7 @@ const ModalEliminarUsuario = ({ usuario, onCerrar, onCompletado }) => {
               >
                 {procesando ? (
                   <>
-                    <Loader size={16} className="spin" /> Eliminando...
+                    <Loader size={16} className="modal-spin" /> Eliminando...
                   </>
                 ) : (
                   <>
@@ -174,7 +191,7 @@ const ModalEliminarUsuario = ({ usuario, onCerrar, onCompletado }) => {
               >
                 {procesando ? (
                   <>
-                    <Loader size={16} className="spin" /> Desactivando...
+                    <Loader size={16} className="modal-spin" /> Desactivando...
                   </>
                 ) : (
                   <>
