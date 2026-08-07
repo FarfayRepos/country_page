@@ -1,8 +1,19 @@
+import "../server/env.js";
 import express from "express";
 import { Resend } from "resend";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const router = express.Router();
-const resend = new Resend("re_h3MUFR11_AMEvhDEbDmza1P89t3fHWkJ5");
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// CSS de los correos en archivo aparte (email.css). Se lee una sola vez al
+// iniciar el servidor y se inyecta en el <style> de cada plantilla.
+const EMAIL_STYLES = fs.readFileSync(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), "email.css"),
+  "utf8"
+);
 
 // Funcion helper para formatear fechas correctamente evitando problemas de zona horaria
 function formatearFecha(fechaReserva) {
@@ -71,26 +82,7 @@ function emailWrapper(preheaderText, content) {
   </noscript>
   <![endif]-->
   <style>
-    :root { color-scheme: light only; supported-color-schemes: light only; }
-    body, .email-bg { background-color: #f0ece7 !important; }
-    .card-bg { background-color: #ffffff !important; }
-    .cred-box { background-color: #faf8f5 !important; }
-    .cred-value { background-color: #ffffff !important; color: #1a1a1a !important; }
-    .note-warn { background-color: #fef9ef !important; }
-    .note-ok { background-color: #f0f8f0 !important; }
-    .detail-bg { background-color: #faf8f5 !important; }
-    .footer-bg { background-color: #1f1f1f !important; }
-    u + .body .gmail-blend { background: none !important; }
-
-    @media only screen and (max-width: 600px) {
-      .email-container { width: 100% !important; max-width: 100% !important; }
-      .email-padding { padding-left: 20px !important; padding-right: 20px !important; }
-      .header-padding { padding: 20px 20px !important; }
-      .cred-inner { padding: 16px 16px !important; }
-      .cred-value-box { padding: 14px 12px !important; }
-      .cta-btn { padding: 14px 32px !important; font-size: 14px !important; }
-      .footer-text { padding: 16px 20px !important; }
-    }
+${EMAIL_STYLES}
   </style>
 </head>
 <body class="body" style="margin:0; padding:0; background-color:#f0ece7; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
@@ -219,13 +211,141 @@ function detailRow(label, value, opts = {}) {
   </table>`;
 }
 
+// Boton "bulletproof": VML para Outlook (que ignora border-radius y padding en <a>)
+// y un <a> normal para el resto de clientes.
 function ctaButton(text, href = 'https://elrefugiocountryclub.com/login') {
   return `
-<div style="text-align:center; margin:20px 0 0;">
-  <a href="${href}" class="cta-btn" style="display:inline-block; background-color:#8b6f4e; color:#ffffff !important; text-decoration:none; padding:13px 36px; border-radius:8px; font-size:14px; font-weight:700; letter-spacing:0.3px; mso-padding-alt:0; text-align:center;">
-    ${text}
-  </a>
-</div>`;
+<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="margin:22px 0 4px;">
+  <tr>
+    <td align="center">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:46px; v-text-anchor:middle; width:270px;" arcsize="18%" stroke="f" fillcolor="#8b6f4e">
+        <w:anchorlock/>
+        <center style="color:#ffffff; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; letter-spacing:0.3px;">${text}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-- -->
+      <a href="${href}" class="cta-btn" style="display:inline-block; background-color:#8b6f4e; color:#ffffff !important; text-decoration:none; padding:14px 38px; border-radius:8px; font-size:14px; font-weight:700; letter-spacing:0.3px; text-align:center;">
+        ${text}
+      </a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>`;
+}
+
+// -- Bloques de composicion --
+
+// Encabezado de contenido: etiqueta pequena + titulo + filete dorado + bajada
+function contentHeading(eyebrow, title, subtitle = '') {
+  return `
+<p style="margin:0 0 6px 0; color:#a68968; font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; text-align:center;">
+  ${eyebrow}
+</p>
+<h2 style="margin:0 0 12px 0; color:#1a1a1a; font-size:21px; font-weight:700; line-height:1.3; text-align:center; font-family:Georgia,'Times New Roman',serif;">
+  ${title}
+</h2>
+<table cellspacing="0" cellpadding="0" role="presentation" align="center" style="margin:0 auto 14px;">
+  <tr>
+    <td style="width:40px; height:2px; background-color:#c9b394; font-size:0; line-height:2px;">&nbsp;</td>
+  </tr>
+</table>
+${subtitle ? `<p style="margin:0 0 22px 0; color:#7a7a7a; font-size:13px; text-align:center; line-height:1.6;">${subtitle}</p>` : ''}`;
+}
+
+// Un campo de credencial (etiqueta + valor destacado en monoespaciada)
+function credentialField(label, value, iconSrc, opts = {}) {
+  const { last = false } = opts;
+  const iconHtml = iconSrc
+    ? `<img src="${iconSrc}" alt="" width="12" height="12" style="display:inline-block; vertical-align:middle; margin-right:5px;">`
+    : '';
+  return `
+<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="${last ? '' : 'margin-bottom:14px;'}">
+  <tr>
+    <td>
+      <span style="color:#8b6f4e; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; display:block; margin-bottom:7px;">
+        ${iconHtml}${label}
+      </span>
+      <table width="100%" cellspacing="0" cellpadding="0" role="presentation" class="cred-value" style="background-color:#ffffff; border:1px solid #e4ddd3; border-radius:8px;">
+        <tr>
+          <td class="cred-value-box" style="padding:15px 18px; text-align:center;">
+            <span class="cred-mono unstyled-link" style="font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,Courier,monospace; color:#1a1a1a; font-size:18px; font-weight:700; letter-spacing:1px; word-break:break-all;">
+              ${value}
+            </span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+// Tarjeta que agrupa las credenciales, con su pastilla de titulo
+function credentialsCard(badgeText, fieldsHtml, hint = '') {
+  return `
+<table width="100%" cellspacing="0" cellpadding="0" role="presentation" class="cred-box" style="background-color:#faf8f5; border:1px solid #e8e0d6; border-radius:12px; margin-bottom:16px;">
+  <tr>
+    <td class="cred-inner" style="padding:22px 22px 20px;">
+      <p style="margin:0 0 18px 0; text-align:center;">
+        <span style="display:inline-block; background-color:#8b6f4e; color:#ffffff; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.6px; padding:5px 16px; border-radius:20px;">
+          ${badgeText}
+        </span>
+      </p>
+      ${fieldsHtml}
+      ${hint ? `<p style="margin:14px 0 0 0; color:#a89c8c; font-size:11px; text-align:center; line-height:1.5;">${hint}</p>` : ''}
+    </td>
+  </tr>
+</table>`;
+}
+
+// Caja de nota: 'warn' (dorado) u 'ok' (verde)
+function noteBox(html, tone = 'warn') {
+  const t = tone === 'ok'
+    ? { cls: 'note-ok', bg: '#f0f8f0', border: '#c8e6c8', color: '#2e7d32' }
+    : { cls: 'note-warn', bg: '#fef9ef', border: '#f5e6c4', color: '#8b6f4e' };
+  return `
+<table width="100%" cellspacing="0" cellpadding="0" role="presentation">
+  <tr>
+    <td class="${t.cls}" style="background-color:${t.bg}; border:1px solid ${t.border}; border-radius:8px; padding:13px 15px;">
+      <p style="margin:0; color:${t.color}; font-size:12px; line-height:1.55;">
+        ${html}
+      </p>
+    </td>
+  </tr>
+</table>`;
+}
+
+// Lista numerada de primeros pasos
+function stepsList(title, steps) {
+  const rows = steps.map((step, i) => `
+    <tr>
+      <td width="24" valign="top" style="padding:${i === 0 ? '0' : '10px'} 10px 0 0;">
+        <table cellspacing="0" cellpadding="0" role="presentation">
+          <tr>
+            <td width="20" height="20" align="center" valign="middle" style="width:20px; height:20px; background-color:#8b6f4e; border-radius:10px; color:#ffffff; font-size:11px; font-weight:700; line-height:20px;">
+              ${i + 1}
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td valign="top" style="padding:${i === 0 ? '2px' : '12px'} 0 0 0; color:#5a5248; font-size:12.5px; line-height:1.5;">
+        ${step}
+      </td>
+    </tr>`).join('');
+
+  return `
+<table width="100%" cellspacing="0" cellpadding="0" role="presentation" class="steps-box" style="background-color:#ffffff; border:1px solid #ebe5dd; border-radius:10px; margin-top:16px;">
+  <tr>
+    <td class="steps-inner" style="padding:16px 18px;">
+      <p style="margin:0 0 12px 0; color:#8b6f4e; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.4px;">
+        ${title}
+      </p>
+      <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
+        ${rows}
+      </table>
+    </td>
+  </tr>
+</table>`;
 }
 
 // -- Endpoints --
@@ -247,83 +367,31 @@ router.post("/send-credentials", async (req, res) => {
       ${emailHeader()}
 
       <tr>
-        <td class="email-padding" style="padding:24px 28px 20px;">
-          <h2 style="margin:0 0 4px 0; color:#1a1a1a; font-size:18px; font-weight:700; text-align:center;">
-            Bienvenido(a), ${usuarioData.nombre}
-          </h2>
-          <p style="margin:0 0 20px 0; color:#888; font-size:13px; text-align:center; line-height:1.5;">
-            Tu cuenta ha sido creada con el rol de <strong style="color:#8b6f4e;">${usuarioData.rol}</strong>
-          </p>
+        <td class="email-padding" style="padding:30px 30px 26px;">
+          ${contentHeading(
+            'Cuenta creada',
+            `Bienvenido(a), ${usuarioData.nombre}`,
+            `Tu acceso a la plataforma de EL REFUGIO ya esta listo con el rol de <strong style="color:#8b6f4e;">${usuarioData.rol}</strong>.`
+          )}
 
-          <!-- Credenciales -->
-          <table width="100%" cellspacing="0" cellpadding="0" class="cred-box" style="background-color:#faf8f5; border:1px solid #e8e0d6; border-radius:10px; margin-bottom:16px;" role="presentation">
-            <tr>
-              <td class="cred-inner" style="padding:18px 20px;">
-                <p style="margin:0 0 14px 0; text-align:center;">
-                  <span style="display:inline-block; background-color:#8b6f4e; color:#fff; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; padding:4px 14px; border-radius:20px;">
-                    Credenciales de Acceso
-                  </span>
-                </p>
+          ${credentialsCard(
+            'Credenciales de Acceso',
+            credentialField('Usuario', usuarioData.username, icons.user) +
+            credentialField('Contrasena Temporal', usuarioData.password, icons.lock, { last: true }),
+            'Manten este correo a la mano hasta que cambies tu contrasena.'
+          )}
 
-                <!-- Usuario -->
-                <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:12px;" role="presentation">
-                  <tr>
-                    <td>
-                      <span style="color:#8b6f4e; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px;">
-                        <img src="${icons.user}" alt="" width="13" height="13" style="display:inline-block; vertical-align:middle; margin-right:4px;">Usuario
-                      </span>
-                      <div class="cred-value" style="background-color:#ffffff; border:1px solid #e0dbd5; border-radius:8px; text-align:center;">
-                        <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
-                          <tr>
-                            <td class="cred-value-box" style="padding:14px 16px; text-align:center;">
-                              <span style="color:#1a1a1a; font-size:17px; font-weight:700; letter-spacing:0.3px;">
-                                ${usuarioData.username}
-                              </span>
-                            </td>
-                          </tr>
-                        </table>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
-
-                <!-- Contrasena -->
-                <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
-                  <tr>
-                    <td>
-                      <span style="color:#8b6f4e; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px;">
-                        <img src="${icons.lock}" alt="" width="13" height="13" style="display:inline-block; vertical-align:middle; margin-right:4px;">Contrasena Temporal
-                      </span>
-                      <div class="cred-value" style="background-color:#ffffff; border:1px solid #e0dbd5; border-radius:8px; text-align:center;">
-                        <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
-                          <tr>
-                            <td class="cred-value-box" style="padding:14px 16px; text-align:center;">
-                              <span style="color:#1a1a1a; font-size:17px; font-weight:700; letter-spacing:0.5px;">
-                                ${usuarioData.password}
-                              </span>
-                            </td>
-                          </tr>
-                        </table>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-
-          <!-- Nota de seguridad -->
-          <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
-            <tr>
-              <td class="note-warn" style="background-color:#fef9ef; border:1px solid #f5e6c4; border-radius:8px; padding:12px 14px;">
-                <p style="margin:0; color:#8b6f4e; font-size:12px; font-weight:600; line-height:1.5;">
-                  <img src="${icons.shield}" alt="" width="14" height="14" style="display:inline-block; vertical-align:middle; margin-right:4px;">Cambia tu contrasena en tu primer inicio de sesion. No compartas estos datos.
-                </p>
-              </td>
-            </tr>
-          </table>
+          ${noteBox(
+            `<img src="${icons.shield}" alt="" width="14" height="14" style="display:inline-block; vertical-align:middle; margin-right:5px;"><strong>Por tu seguridad:</strong> cambia tu contrasena temporal en tu primer inicio de sesion y no compartas estos datos con nadie.`
+          )}
 
           ${ctaButton('Acceder a la Plataforma')}
+
+          ${stepsList('Primeros pasos', [
+            'Ingresa a la plataforma con el usuario y la contrasena temporal.',
+            'Cambia tu contrasena por una personal y segura.',
+            'Completa tu perfil y comienza a gestionar tus reservas.',
+          ])}
         </td>
       </tr>
 
@@ -364,81 +432,24 @@ router.post("/send-updated-credentials", async (req, res) => {
       ${emailHeader()}
 
       <tr>
-        <td class="email-padding" style="padding:24px 28px 20px;">
-          <h2 style="margin:0 0 4px 0; color:#1a1a1a; font-size:18px; font-weight:700; text-align:center;">
-            Contrasena Actualizada
-          </h2>
-          <p style="margin:0 0 20px 0; color:#888; font-size:13px; text-align:center; line-height:1.5;">
-            Hola <strong style="color:#8b6f4e;">${nombre}</strong>, tu contrasena ha sido actualizada exitosamente.
-          </p>
+        <td class="email-padding" style="padding:30px 30px 26px;">
+          ${contentHeading(
+            'Seguridad de la cuenta',
+            'Contrasena Actualizada',
+            `Hola <strong style="color:#8b6f4e;">${nombre}</strong>, tu contrasena fue actualizada correctamente. Estas son tus credenciales vigentes.`
+          )}
 
-          <!-- Credenciales -->
-          <table width="100%" cellspacing="0" cellpadding="0" class="cred-box" style="background-color:#faf8f5; border:1px solid #e8e0d6; border-radius:10px; margin-bottom:16px;" role="presentation">
-            <tr>
-              <td class="cred-inner" style="padding:18px 20px;">
-                <p style="margin:0 0 14px 0; text-align:center;">
-                  <span style="display:inline-block; background-color:#8b6f4e; color:#fff; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; padding:4px 14px; border-radius:20px;">
-                    Credenciales Actualizadas
-                  </span>
-                </p>
+          ${credentialsCard(
+            'Credenciales Actualizadas',
+            credentialField('Usuario', username, icons.user) +
+            credentialField('Nueva Contrasena', newPassword, icons.key, { last: true }),
+            'Te recomendamos eliminar este correo despues de guardar tus datos.'
+          )}
 
-                <!-- Usuario -->
-                <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:12px;" role="presentation">
-                  <tr>
-                    <td>
-                      <span style="color:#8b6f4e; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px;">
-                        <img src="${icons.user}" alt="" width="13" height="13" style="display:inline-block; vertical-align:middle; margin-right:4px;">Usuario
-                      </span>
-                      <div class="cred-value" style="background-color:#ffffff; border:1px solid #e0dbd5; border-radius:8px; text-align:center;">
-                        <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
-                          <tr>
-                            <td class="cred-value-box" style="padding:14px 16px; text-align:center;">
-                              <span style="color:#1a1a1a; font-size:17px; font-weight:700; letter-spacing:0.3px;">
-                                ${username}
-                              </span>
-                            </td>
-                          </tr>
-                        </table>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
-
-                <!-- Nueva contrasena -->
-                <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
-                  <tr>
-                    <td>
-                      <span style="color:#8b6f4e; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:6px;">
-                        <img src="${icons.key}" alt="" width="13" height="13" style="display:inline-block; vertical-align:middle; margin-right:4px;">Nueva Contrasena
-                      </span>
-                      <div class="cred-value" style="background-color:#ffffff; border:1px solid #e0dbd5; border-radius:8px; text-align:center;">
-                        <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
-                          <tr>
-                            <td class="cred-value-box" style="padding:14px 16px; text-align:center;">
-                              <span style="color:#1a1a1a; font-size:17px; font-weight:700; letter-spacing:0.5px;">
-                                ${newPassword}
-                              </span>
-                            </td>
-                          </tr>
-                        </table>
-                      </div>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-
-          <!-- Nota -->
-          <table width="100%" cellspacing="0" cellpadding="0" role="presentation">
-            <tr>
-              <td class="note-ok" style="background-color:#f0f8f0; border:1px solid #c8e6c8; border-radius:8px; padding:12px 14px;">
-                <p style="margin:0; color:#2e7d32; font-size:12px; font-weight:600; line-height:1.5;">
-                  <img src="${icons.checkCircle}" alt="" width="14" height="14" style="display:inline-block; vertical-align:middle; margin-right:4px;">Tu contrasena ha sido cambiada correctamente. Manten tus credenciales seguras.
-                </p>
-              </td>
-            </tr>
-          </table>
+          ${noteBox(
+            `<img src="${icons.checkCircle}" alt="" width="14" height="14" style="display:inline-block; vertical-align:middle; margin-right:5px;"><strong>Cambio confirmado.</strong> Si no solicitaste esta actualizacion, contacta a la administracion del club de inmediato.`,
+            'ok'
+          )}
 
           ${ctaButton('Acceder a la Plataforma')}
         </td>

@@ -1,0 +1,103 @@
+/* =============================================================
+   EL REFUGIO - Estilos de correos transaccionales
+   -------------------------------------------------------------
+   Paleta: cafe / crema, tono profesional-ecuestre.
+   Este archivo se inyecta dentro del <style> de cada correo
+   (ver emailWrapper en email.js).
+
+   IMPORTANTE: muchos clientes de correo (Outlook, Gmail web con
+   ciertas configuraciones) ignoran o recortan el <style>, por eso
+   los estilos criticos siguen escritos inline en el HTML.
+   Aqui van solo:
+     - forzados de color de fondo (modo oscuro / Gmail)
+     - tipografias reutilizables
+     - reglas responsive (que NO se pueden poner inline)
+   ============================================================= */
+
+:root {
+  color-scheme: light only;
+  supported-color-schemes: light only;
+
+  /* Paleta de referencia (usar los mismos valores en el HTML inline) */
+  --brand-brown-950: #2b1d13;  /* footer / texto mas oscuro */
+  --brand-brown-800: #4a3324;  /* headers, titulos */
+  --brand-brown-600: #6f4e33;  /* acentos, bordes fuertes */
+  --brand-brown-400: #a9855f;  /* acentos suaves, iconos */
+  --brand-cream-100: #f4ede3;  /* fondo general del correo */
+  --brand-cream-50:  #fbf7f1;  /* fondo de tarjetas/cajas */
+  --brand-gold-100:  #f6ecd6;  /* avisos/warn */
+  --brand-sage-100:  #eef1e6;  /* avisos/ok, tono oliva suave que combina con cafe */
+}
+
+/* ---------- Fondos: se fuerzan para evitar el dark mode ---------- */
+body,
+.email-bg      { background-color: #f4ede3 !important; } /* crema calido en vez de gris */
+.card-bg       { background-color: #ffffff !important; }
+.cred-box      { background-color: #fbf7f1 !important; } /* crema suave, antes gris */
+.cred-value    { background-color: #ffffff !important; }
+.note-warn     { background-color: #f6ecd6 !important; } /* ambar tostado */
+.note-ok       { background-color: #eef1e6 !important; } /* verde oliva muy suave, combina con cafe */
+.detail-bg     { background-color: #fbf7f1 !important; }
+.steps-box     { background-color: #ffffff !important; }
+.footer-bg     { background-color: #2b1d13 !important; } /* cafe oscuro casi negro, no gris neutro */
+
+.cred-value,
+.cred-mono     { color: #2b1d13 !important; } /* texto cafe oscuro en vez de negro puro */
+
+/* Bordes y detalles con acento cafe (opcional: usar en el HTML inline) */
+.card-border   { border: 1px solid #e4d8c6 !important; }
+.detail-border { border-left: 3px solid #6f4e33 !important; }
+
+/* Gmail: evita que aplique su propia mezcla de fondo */
+u + .body .gmail-blend { background: none !important; }
+
+/* ---------- Tipografia ---------- */
+.brand-heading {
+  color: #4a3324 !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  letter-spacing: 0.3px !important;
+}
+
+.brand-text {
+  color: #3a2a1c !important;
+}
+
+.brand-muted {
+  color: #8a7561 !important;
+}
+
+/* ---------- Credenciales ---------- */
+/* Monoespaciada: evita confundir O/0, l/1/I al copiar la contrasena */
+.cred-mono {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace !important;
+}
+
+/* iOS/Gmail detectan usuarios y correos y los convierten en enlaces azules */
+a[x-apple-data-detectors],
+.cred-mono a,
+.unstyled-link a {
+  color: inherit !important;
+  text-decoration: none !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+}
+
+/* ---------- Boton principal (referencia de color, ajustar inline) ---------- */
+.cta-btn {
+  background-color: #6f4e33 !important;
+  color: #ffffff !important;
+}
+
+/* ---------- Responsive ---------- */
+@media only screen and (max-width: 600px) {
+  .email-container { width: 100% !important; max-width: 100% !important; }
+  .email-padding   { padding-left: 20px !important; padding-right: 20px !important; }
+  .header-padding  { padding: 20px 20px !important; }
+  .cred-inner      { padding: 16px 16px !important; }
+  .cred-value-box  { padding: 14px 12px !important; }
+  .cred-mono       { font-size: 16px !important; letter-spacing: 0.6px !important; }
+  .cta-btn         { padding: 14px 30px !important; font-size: 14px !important; }
+  .steps-inner     { padding: 14px 16px !important; }
+  .footer-text     { padding: 16px 20px !important; }
+}
