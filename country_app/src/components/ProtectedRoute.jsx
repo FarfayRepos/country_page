@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { cerrarSesion, haySesion, obtenerUsuario } from '../utils/sesion';
 
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -8,36 +9,20 @@ const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = () => {
-      const user = sessionStorage.getItem('user');
-      console.log('Verificando autenticación:', { user: !!user, path: location.pathname });
-      
-      if (user) {
-        try {
-          const parsedUser = JSON.parse(user);
-          // Verificar que el usuario tenga los campos necesarios
-          if (parsedUser && parsedUser.id && parsedUser.nombre) {
-            console.log('Usuario autenticado:', parsedUser.nombre);
-            setIsAuthenticated(true);
-          } else {
-            console.log('Datos de usuario inválidos, limpiando sessionStorage');
-            // Si los datos están corruptos, limpiar sessionStorage
-            sessionStorage.removeItem('user');
-            sessionStorage.removeItem('authToken');
-            sessionStorage.removeItem('instructorData');
-            sessionStorage.removeItem('userData');
-            setIsAuthenticated(false);
-          }
-        } catch (error) {
-          console.log('Error al parsear usuario, limpiando sessionStorage:', error);
-          // Si hay error al parsear, limpiar sessionStorage
-          sessionStorage.removeItem('user');
-          sessionStorage.removeItem('authToken');
-          sessionStorage.removeItem('instructorData');
-          sessionStorage.removeItem('userData');
-          setIsAuthenticated(false);
-        }
+      // Se exige usuario Y token: una sesión sin token no puede hablar con el
+      // backend, así que vale lo mismo que no tener sesión.
+      if (!haySesion()) {
+        cerrarSesion();
+        setIsAuthenticated(false);
+        setIsLoading(false);
+        return;
+      }
+
+      const user = obtenerUsuario();
+      if (user?.id && user?.nombre) {
+        setIsAuthenticated(true);
       } else {
-        console.log('No hay usuario en sessionStorage');
+        cerrarSesion();
         setIsAuthenticated(false);
       }
       setIsLoading(false);
@@ -70,8 +55,7 @@ const ProtectedRoute = ({ children }) => {
 
     // Solución para navegadores: recargar si la página se muestra desde el historial y no hay sesión
     const handlePageShow = (event) => {
-      const user = sessionStorage.getItem('user');
-      if (!user && event.persisted) {
+      if (!haySesion() && event.persisted) {
         // Si no hay sesión y la página viene del historial, recargar
         window.location.reload();
       }
@@ -111,9 +95,8 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    console.log('Usuario no autenticado, redirigiendo a login');
     // Forzar limpieza completa antes de redirigir
-    sessionStorage.clear();
+    cerrarSesion();
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 

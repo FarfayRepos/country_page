@@ -1,5 +1,10 @@
 import express from 'express';
 import db from '../server/db.js';
+import {
+  verificarToken,
+  requiereStaff,
+  requiereSelfOStaff,
+} from '../server/auth.js';
 import axios from 'axios';
 
 const router = express.Router();
@@ -121,7 +126,7 @@ const formatDateForDisplay = (dateString) => {
 };
 
 // Obtener todos los usuarios
-router.get('/all', async (req, res) => {
+router.get('/all', requiereStaff, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM usuarios");
     res.json(rows);
@@ -132,7 +137,7 @@ router.get('/all', async (req, res) => {
 });
 
 // Obtener usuarios agrupados con información del último pago (para contabilidad)
-router.get('/users-with-payments', async (req, res) => {
+router.get('/users-with-payments', requiereStaff, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -199,7 +204,7 @@ router.get('/users-with-payments', async (req, res) => {
 // - Campos adicionales opcionales: edad, telefono, tipo_cliente, nivel, tipo_nivel
 // - Estatus por defecto: 'activo'
 // - Fecha de registro: timestamp actual
-router.post('/register', async (req, res) => {
+router.post('/register', requiereStaff, async (req, res) => {
   // Extraer campos del body de la petición
   // Campos requeridos: nombre, apellido, rol
   // Campos opcionales: correo, customPassword, edad, telefono, tipo_cliente, nivel, tipo_nivel
@@ -324,7 +329,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Endpoint para obtener previsualización de credenciales (sin crear usuario)
-router.post('/preview-credentials', async (req, res) => {
+router.post('/preview-credentials', requiereStaff, async (req, res) => {
   const { nombre, apellido, customPassword } = req.body;
 
   // Validar campos requeridos
@@ -381,7 +386,7 @@ router.post('/preview-credentials', async (req, res) => {
 //   "tipo_nivel": "equitacion",
 //   "observaciones": "Pago inicial del cliente"
 // }
-router.post('/register-cliente', async (req, res) => {
+router.post('/register-cliente', requiereStaff, async (req, res) => {
   const { nombre, apellido, email, monto, fecha_pago, concepto, estatus_pago, metodo_pago, withoutEmail, customPassword, edad, telefono, tipo_cliente, nivel, tipo_nivel, estatus, observaciones } = req.body;
 
   // Validar campos requeridos del usuario
@@ -483,7 +488,7 @@ router.post('/register-cliente', async (req, res) => {
 });
 
 // Editar correo del usuario
-router.patch('/update-email/:id', async (req, res) => {
+router.patch('/update-email/:id', requiereStaff, async (req, res) => {
   const { id } = req.params;
   const { email, enviarCredenciales } = req.body;
 
@@ -564,7 +569,7 @@ router.patch('/update-email/:id', async (req, res) => {
 });
 
 // Reenviar las credenciales de acceso al correo del usuario
-router.post('/resend-credentials/:id', async (req, res) => {
+router.post('/resend-credentials/:id', requiereStaff, async (req, res) => {
   const { id } = req.params;
   const { email } = req.body || {};
 
@@ -613,7 +618,7 @@ router.post('/resend-credentials/:id', async (req, res) => {
 });
 
 // Actualizar contraseña del usuario
-router.patch('/update-password/:id', async (req, res) => {
+router.patch('/update-password/:id', verificarToken, requiereSelfOStaff(), async (req, res) => {
   const { id } = req.params;
   const { password, currentPassword } = req.body;
 
@@ -691,7 +696,7 @@ router.patch('/update-password/:id', async (req, res) => {
 });
 
 // Actualizar estado del usuario
-router.patch('/update-status/:id', async (req, res) => {
+router.patch('/update-status/:id', requiereStaff, async (req, res) => {
   const { id } = req.params;
   const { estatus } = req.body;
 
@@ -735,7 +740,7 @@ router.patch('/update-status/:id', async (req, res) => {
 // así que un DELETE directo dejaría reservas y pagos huérfanos y descuadraría
 // la contabilidad. Si hay historial se responde 409 con el detalle para que el
 // panel ofrezca desactivar la cuenta (PATCH /update-status) en su lugar.
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requiereStaff, async (req, res) => {
   const { id } = req.params;
 
   if (!/^\d+$/.test(id)) {
@@ -819,7 +824,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Actualizar nivel del usuario
-router.patch('/update-nivel/:id', async (req, res) => {
+router.patch('/update-nivel/:id', requiereStaff, async (req, res) => {
   const { id } = req.params;
   const { tipo_nivel } = req.body;
 
@@ -860,7 +865,7 @@ router.patch('/update-nivel/:id', async (req, res) => {
 });
 
 // Habilitar/deshabilitar la reserva semanal (sólo aplica a clientes avanzados).
-router.patch('/update-reserva-semanal/:id', async (req, res) => {
+router.patch('/update-reserva-semanal/:id', requiereStaff, async (req, res) => {
   const { id } = req.params;
   const { permite_reserva_semanal } = req.body;
 
@@ -888,7 +893,7 @@ router.patch('/update-reserva-semanal/:id', async (req, res) => {
 });
 
 // Obtener usuarios con información de contabilidad
-router.get('/with-payments', async (req, res) => {
+router.get('/with-payments', requiereStaff, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -936,7 +941,7 @@ router.get('/with-payments', async (req, res) => {
 });
 
 // Obtener información de pagos de un usuario específico
-router.get('/payments/:id', async (req, res) => {
+router.get('/payments/:id', requiereStaff, async (req, res) => {
   const { id } = req.params;
 
   // Validar que el ID sea un número válido
@@ -987,7 +992,7 @@ router.get('/payments/:id', async (req, res) => {
 });
 
 // Crear o actualizar registro de contabilidad de usuario
-router.post('/payments', async (req, res) => {
+router.post('/payments', requiereStaff, async (req, res) => {
   const { cliente_id, monto, fecha_pago, concepto, estatus_pago, metodo_pago, observaciones } = req.body;
 
   // Validar campos requeridos
@@ -1033,7 +1038,7 @@ router.post('/payments', async (req, res) => {
 });
 
 // Obtener historial completo de pagos de un usuario
-router.get('/payment-history/:id', async (req, res) => {
+router.get('/payment-history/:id', requiereStaff, async (req, res) => {
   const { id } = req.params;
 
   // Validar que el ID sea un número válido
@@ -1074,7 +1079,7 @@ router.get('/payment-history/:id', async (req, res) => {
 });
 
 // Agregar nuevo pago al historial
-router.post('/add-payment', async (req, res) => {
+router.post('/add-payment', requiereStaff, async (req, res) => {
   const { cliente_id, monto, fecha_pago, concepto, estatus_pago, metodo_pago, observaciones } = req.body;
 
   // Validar campos requeridos
@@ -1120,7 +1125,7 @@ router.post('/add-payment', async (req, res) => {
 });
 
 // Obtener conteo de pagos por usuario
-router.get('/payment-counts', async (req, res) => {
+router.get('/payment-counts', requiereStaff, async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT 
@@ -1143,7 +1148,7 @@ router.get('/payment-counts', async (req, res) => {
 });
 
 // Endpoint para obtener estado de pagos (vencidos, próximos a vencer)
-router.get('/payment-status', async (req, res) => {
+router.get('/payment-status', requiereStaff, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -1221,7 +1226,7 @@ router.get('/payment-status', async (req, res) => {
 });
 
 // Endpoint para editar un pago específico
-router.put('/payment/:id', async (req, res) => {
+router.put('/payment/:id', requiereStaff, async (req, res) => {
   try {
     const { id } = req.params;
     const { monto, fecha_pago, concepto, estatus_pago, metodo_pago, observaciones } = req.body;
@@ -1314,7 +1319,7 @@ router.put('/payment/:id', async (req, res) => {
 });
 
 // Obtener información de un usuario específico
-router.get('/:id', async (req, res) => {
+router.get('/:id', verificarToken, requiereSelfOStaff(), async (req, res) => {
   const { id } = req.params;
 
   // Validar que el ID sea un número válido
@@ -1387,7 +1392,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Cambiar contraseña de usuario
-router.post('/change-password', async (req, res) => {
+router.post('/change-password', verificarToken, requiereSelfOStaff((req) => req.body.userId), async (req, res) => {
   const { userId, currentPassword, newPassword } = req.body;
 
   // Validar datos requeridos

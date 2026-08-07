@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import db from "./db.js"; // db.js al mismo nivel que server
 import os from "os";
+import { firmarToken } from "./auth.js";
 
 // Importar rutas
 import instructorRoutes from "../routes/instructor.js";
@@ -71,6 +72,9 @@ app.post("/api/login", async (req, res) => {
     if (estado === "activo") {
       return res.json({
         mensaje: "✅ Login correcto",
+        // Token de sesión: el frontend lo envía en Authorization: Bearer <token>
+        // y el backend lo exige en las rutas de gestión de usuarios.
+        token: firmarToken(user),
         user: {
           id: user.id,
           nombre: user.nombre,

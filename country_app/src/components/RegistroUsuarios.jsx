@@ -14,8 +14,12 @@ import TablaUsuarios from "./registro/TablaUsuarios";
 import useUsuarios from "../hooks/useUsuarios";
 import useRoleGuard from "../hooks/useRoleGuard";
 
+// Fuera del componente: si fuera un literal en línea, el efecto del guard se
+// volvería a ejecutar en cada render.
+const ROLES_PERMITIDOS = ["creadorcuentas"];
+
 const GestionUsuarios = () => {
-  useRoleGuard(["creadorcuentas"]);
+  useRoleGuard(ROLES_PERMITIDOS);
 
   const { usuarios, loading, error, isRefreshing, crearUsuario, recargarSilencioso } =
     useUsuarios();

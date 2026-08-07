@@ -1,27 +1,24 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRedirectRoute } from '../utils/roleRedirect';
+import { cerrarSesion, haySesion, obtenerUsuario } from '../utils/sesion';
 
 export default function useRoleGuard(requiredRoles) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userStr = sessionStorage.getItem('user');
-    if (!userStr) {
+    // Sin token no sirve de nada mostrar la vista: el backend rechazaría
+    // todas sus llamadas con 401.
+    if (!haySesion()) {
+      cerrarSesion();
       navigate('/login', { replace: true });
       return;
     }
-    let user;
-    try {
-      user = JSON.parse(userStr);
-    } catch {
-      sessionStorage.removeItem('user');
-      navigate('/login', { replace: true });
-      return;
-    }
-    if (!user.rol || !requiredRoles.includes(user.rol)) {
+
+    const user = obtenerUsuario();
+    if (!user?.rol || !requiredRoles.includes(user.rol)) {
       // Redirigir al destino correcto según su rol
-      navigate(getRedirectRoute(user.rol), { replace: true });
+      navigate(getRedirectRoute(user?.rol), { replace: true });
     }
   }, [navigate, requiredRoles]);
 }

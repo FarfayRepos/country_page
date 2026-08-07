@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import image10 from "../img/image_10.jpg";
 import logoRefugio from "../img/El_refugio_logo.png";
 import { getRedirectRoute } from "../utils/roleRedirect";
+import { cerrarSesion, guardarSesion, haySesion, obtenerUsuario } from "../utils/sesion";
 import "../CSS/Login.css";
 
 const UserIcon = () => (
@@ -59,19 +60,24 @@ const Login = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const user = sessionStorage.getItem('user');
-    if (user) {
-      try {
-        const parsedUser = JSON.parse(user);
-        if (parsedUser && parsedUser.id && parsedUser.nombre) {
-          const redirectPath = location.state?.from || getRedirectRoute(parsedUser.rol);
-          navigate(redirectPath, { replace: true });
-        }
-      } catch (error) {
-        sessionStorage.clear();
-      }
+    // Solo se salta el login si la sesión está completa (usuario + token).
+    if (!haySesion()) {
+      cerrarSesion();
+      return;
+    }
+    const usuario = obtenerUsuario();
+    if (usuario?.id && usuario?.nombre) {
+      const redirectPath = location.state?.from || getRedirectRoute(usuario.rol);
+      navigate(redirectPath, { replace: true });
     }
   }, [navigate, location]);
+
+  // Aviso cuando el interceptor expulsó al usuario por token vencido.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("sesion") === "expirada") {
+      setEstadoMsg("Tu sesión expiró. Vuelve a iniciar sesión.");
+    }
+  }, []);
 
   const validateField = (name, value) => {
     if (name === "password") {
@@ -128,8 +134,13 @@ const Login = () => {
       // Para inactivo/bloqueado/pendiente el backend responde 403 sin `user`.
       const estado = (data.user?.estatus || "").toLowerCase();
       if (response.ok && data.user && estado === "activo") {
-        sessionStorage.removeItem("user");
-        sessionStorage.setItem("user", JSON.stringify(data.user));
+        if (!data.token) {
+          throw new Error(
+            "El servidor no entregó un token de sesión. Actualiza el backend."
+          );
+        }
+        cerrarSesion();
+        guardarSesion({ user: data.user, token: data.token });
         setShowSuccess(true);
         setEstadoMsg("");
         setTimeout(() => {
@@ -138,7 +149,7 @@ const Login = () => {
         }, 1000);
       } else {
         // No guardar sesión ni redirigir: cuenta no activa o credenciales inválidas.
-        sessionStorage.removeItem("user");
+        cerrarSesion();
         setShowSuccess(false);
         throw new Error(data.mensaje || data.message || "Usuario o contraseña incorrectos");
       }
