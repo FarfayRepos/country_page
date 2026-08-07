@@ -1,0 +1,625 @@
+/* ===========================================================================
+   RegistroPanel.css
+   Capa de diseño de la vista "Gestión de Usuarios".
+   Alinea la vista con el Panel de Administración (AdminPanel.css) y reemplaza
+   los estilos en línea que antes vivían dentro de RegistroUsuarios.jsx.
+   Se carga DESPUÉS de AdminPanel.css y RegistroUsuarios.css.
+   =========================================================================== */
+
+/* ---------- Contenedor y pestañas ---------- */
+
+.registro-container {
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.registro-stats .stat-value {
+  font-size: 2rem;
+}
+
+.tab-panel {
+  animation: fadeInUp 0.4s ease both;
+}
+
+.tab-panel.oculto {
+  display: none;
+}
+
+/* ---------- Tarjetas de sección (mismo lenguaje que el panel admin) ---------- */
+
+.registro-container .user-form-section,
+.registro-container .user-table-section {
+  background: #fff;
+  backdrop-filter: none;
+  border: 1px solid rgba(107, 68, 35, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(107, 68, 35, 0.06);
+  padding: 1.75rem;
+  overflow: hidden;
+}
+
+.registro-container .user-form-section::before,
+.registro-container .user-table-section::before {
+  border-radius: 0;
+}
+
+.registro-container .section-header {
+  text-align: left;
+  border-bottom: 1px solid #f0eae2;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.registro-container .section-header h3 {
+  justify-content: flex-start;
+  font-size: 1.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.registro-container .section-header p {
+  margin: 0;
+}
+
+/* ---------- Aviso superior del formulario ---------- */
+
+.registro-container .auto-credentials-info {
+  background: rgba(193, 123, 74, 0.08);
+  border: 1px solid rgba(193, 123, 74, 0.25);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #8b5a2b;
+  line-height: 1.5;
+}
+
+/* ---------- Controles de la tabla ---------- */
+
+.registro-container .controls-container {
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  background: #faf8f5;
+  box-shadow: none;
+  border: 1px solid #f0eae2;
+}
+
+.registro-container .filters-grid {
+  grid-template-columns: 2fr 1fr;
+}
+
+.registro-container .search-input,
+.registro-container .filter-select {
+  padding: 0.7rem 1rem;
+  font-size: 0.92rem;
+}
+
+.registro-container .search-input {
+  padding-left: 2.85rem;
+  padding-right: 2.25rem;
+}
+
+.search-clear {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #a08c78;
+  display: flex;
+  padding: 0;
+}
+
+.search-clear:hover {
+  color: #6b4423;
+}
+
+/* ---------- Tabla ---------- */
+
+.registro-container .table-container {
+  border: 1px solid #f0eae2;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.registro-container .users-table th {
+  background: linear-gradient(135deg, #c17b4a 0%, #8b5a2b 100%);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  padding: 0.95rem 1rem;
+}
+
+.registro-container .users-table td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.registro-container .users-table tbody tr:hover {
+  background: #faf8f5;
+}
+
+.registro-container .users-table .form-input {
+  min-width: 190px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.registro-container .action-btn {
+  white-space: nowrap;
+}
+
+/* ---------- Celda de credenciales ---------- */
+
+.cred-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 260px;
+}
+
+.cred-box {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.cred-box--user {
+  background: #f6f4f1;
+  border-color: #e6ded4;
+}
+
+.cred-box--pass {
+  background: #fff8e6;
+  border-color: #f0d79a;
+}
+
+.cred-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #8b7355;
+  min-width: 52px;
+}
+
+.cred-box--pass .cred-label {
+  color: #9a6b1f;
+}
+
+.cred-value {
+  flex: 1;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  color: #4a4a4a;
+  word-break: break-all;
+}
+
+.cred-box--pass .cred-value {
+  color: #7a5510;
+}
+
+.cred-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.cred-input {
+  flex: 1;
+  min-width: 120px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.55rem;
+  background: #fff;
+  border: 2px solid #9caf88;
+  border-radius: 6px;
+  outline: none;
+}
+
+.cred-input:focus {
+  border-color: #c17b4a;
+  box-shadow: 0 0 0 3px rgba(193, 123, 74, 0.12);
+}
+
+.cred-input--invalida {
+  border-color: #dc3545;
+}
+
+/* Botones de icono de la tabla */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.45rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #fff;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.icon-btn--primary { background: #6b4423; }
+.icon-btn--warning { background: #e8b84b; color: #6b4423; }
+.icon-btn--info    { background: #c17b4a; }
+.icon-btn--danger  { background: #dc3545; }
+
+/* ---------- Badges de la tabla ---------- */
+
+.sin-correo {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  background: #fdeaec;
+  color: #b02a37;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.registro-container .rol-badge {
+  display: inline-block;
+  text-transform: capitalize;
+  background: rgba(107, 68, 35, 0.1);
+  color: #6b4423;
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.registro-container .rol-administrador { background: rgba(193, 123, 74, 0.18); color: #8b5a2b; }
+.registro-container .rol-instructora   { background: rgba(156, 175, 136, 0.22); color: #4f6640; }
+.registro-container .rol-creadorcuentas{ background: rgba(107, 68, 35, 0.14);  color: #4a2c17; }
+
+.nivel-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: rgba(156, 175, 136, 0.18);
+  color: #5a7247;
+  white-space: nowrap;
+}
+
+.nivel-vacio {
+  color: #a99a89;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.celda-vacia {
+  color: #d8cfc4;
+}
+
+/* ---------- Vista previa de credenciales del formulario ---------- */
+
+.credentials-tip--alerta {
+  color: #b05a00;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.credentials-tip--alerta span {
+  display: block;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+
+.registro-container .copy-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ---------- Credenciales del usuario recién creado ---------- */
+
+.credenciales-creadas {
+  background: #f2f7ee;
+  border: 1px solid #c3d4b2;
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.4s ease both;
+}
+
+.credenciales-creadas__acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.credenciales-creadas__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+  color: #4f6640;
+}
+
+.credenciales-creadas__datos code {
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  background: #fff;
+  border: 1px solid #d8e4cc;
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  color: #3f5333;
+  user-select: all;
+}
+
+/* ---------- Acciones de la fila y estatus ---------- */
+
+.registro-container .table-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.registro-container .btn-reactivar {
+  border-color: #9caf88;
+  color: #5a7247;
+  background: none;
+}
+
+.registro-container .btn-reactivar:hover:not(:disabled) {
+  background: #9caf88;
+  color: #fff;
+}
+
+.estatus-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 10px;
+  background: #fdeaec;
+  color: #b02a37;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+}
+
+.registro-container .fila-inactiva {
+  background: #fbf7f7;
+  opacity: 0.75;
+}
+
+/* ---------- Modal de eliminación ---------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(58, 40, 25, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1200;
+  animation: modalFade 0.2s ease both;
+}
+
+@keyframes modalFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-eliminar {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.9rem 1.75rem 1.5rem;
+  box-shadow: 0 20px 60px rgba(58, 40, 25, 0.28);
+  text-align: center;
+  animation: fadeInUp 0.25s ease both;
+}
+
+.modal-cerrar {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: #a99a89;
+  cursor: pointer;
+  display: flex;
+  padding: 0.25rem;
+  border-radius: 6px;
+}
+
+.modal-cerrar:hover:not(:disabled) {
+  background: #f5f1ed;
+  color: #6b4423;
+}
+
+.modal-icono {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fdeaec;
+  color: #b02a37;
+}
+
+.modal-icono--aviso {
+  background: #fff4e0;
+  color: #b05a00;
+}
+
+.modal-titulo {
+  font-family: var(--font-primary, serif);
+  font-size: 1.3rem;
+  color: #4a2c17;
+  margin: 0 0 0.6rem;
+}
+
+.modal-texto {
+  font-size: 0.93rem;
+  color: #6b5a48;
+  line-height: 1.55;
+  margin: 0 0 1rem;
+}
+
+.modal-texto code {
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  background: #f5f1ed;
+  border-radius: 5px;
+  padding: 0.1rem 0.35rem;
+}
+
+.modal-texto--sugerencia {
+  background: #f6f9f2;
+  border: 1px solid #d8e4cc;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  color: #4f6640;
+}
+
+.modal-datos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1.25rem;
+  padding: 0.75rem;
+  margin-bottom: 1.25rem;
+  background: #faf8f5;
+  border: 1px solid #f0eae2;
+  border-radius: 10px;
+  font-size: 0.83rem;
+  color: #8b7355;
+}
+
+.modal-datos strong {
+  color: #4a2c17;
+  text-transform: capitalize;
+}
+
+.modal-dependencias {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff8e6;
+  border: 1px solid #f0d79a;
+  border-radius: 10px;
+  text-align: left;
+  font-size: 0.88rem;
+  color: #7a5510;
+}
+
+.modal-dependencias li + li {
+  margin-top: 0.35rem;
+}
+
+.modal-acciones {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: center;
+}
+
+.modal-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 9px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-btn--secundario {
+  background: #f0eae2;
+  color: #6b4423;
+}
+
+.modal-btn--secundario:hover:not(:disabled) {
+  background: #e4dbd0;
+}
+
+.modal-btn--peligro {
+  background: #c0392b;
+  color: #fff;
+}
+
+.modal-btn--peligro:hover:not(:disabled) {
+  background: #a93226;
+}
+
+.modal-btn--aviso {
+  background: linear-gradient(135deg, #c17b4a 0%, #8b5a2b 100%);
+  color: #fff;
+}
+
+.modal-btn--aviso:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .registro-container .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs-container {
+    flex-wrap: wrap;
+  }
+
+  .registro-container .user-form-section,
+  .registro-container .user-table-section {
+    padding: 1.15rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-acciones {
+    flex-direction: column-reverse;
+  }
+
+  .registro-container .tab-button {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .registro-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .registro-stats .stat-card {
+    padding: 1rem;
+  }
+
+  .registro-stats .stat-value {
+    font-size: 1.5rem;
+  }
+}

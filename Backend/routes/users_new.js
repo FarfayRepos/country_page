@@ -728,6 +728,96 @@ router.patch('/update-status/:id', async (req, res) => {
   }
 });
 
+// Eliminar una cuenta de usuario
+//
+// Solo se permite el borrado real cuando la cuenta NO tiene historial. Las
+// tablas `reservas` y `contabilidad` guardan el id del usuario sin FOREIGN KEY,
+// así que un DELETE directo dejaría reservas y pagos huérfanos y descuadraría
+// la contabilidad. Si hay historial se responde 409 con el detalle para que el
+// panel ofrezca desactivar la cuenta (PATCH /update-status) en su lugar.
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!/^\d+$/.test(id)) {
+    return res.status(400).json({ error: 'ID de usuario inválido' });
+  }
+
+  try {
+    const [usuarios] = await db.query(
+      'SELECT id, nombre, apellido, username, rol FROM usuarios WHERE id = ?',
+      [id]
+    );
+
+    if (usuarios.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const usuario = usuarios[0];
+
+    // Historial como cliente
+    const [[{ total: reservas }]] = await db.query(
+      'SELECT COUNT(*) AS total FROM reservas WHERE cliente_id = ?',
+      [id]
+    );
+    const [[{ total: pagos }]] = await db.query(
+      'SELECT COUNT(*) AS total FROM contabilidad WHERE cliente_id = ?',
+      [id]
+    );
+
+    // Ficha de instructora asociada (si la tiene) e historial como instructora
+    const [fichas] = await db.query(
+      'SELECT id FROM instructoras WHERE usuario_id = ?',
+      [id]
+    );
+    const instructoraId = fichas.length > 0 ? fichas[0].id : null;
+
+    let clasesDictadas = 0;
+    if (instructoraId) {
+      const [[fila]] = await db.query(
+        'SELECT COUNT(*) AS total FROM reservas WHERE instructora_id = ?',
+        [instructoraId]
+      );
+      clasesDictadas = fila.total;
+    }
+
+    if (reservas > 0 || pagos > 0 || clasesDictadas > 0) {
+      return res.status(409).json({
+        error: 'La cuenta tiene historial registrado y no puede eliminarse',
+        dependencias: { reservas, pagos, clasesDictadas },
+      });
+    }
+
+    const conexion = await db.getConnection();
+    try {
+      await conexion.beginTransaction();
+
+      if (instructoraId) {
+        // instructora_clase no tiene FK, se borra a mano. descansos,
+        // instructora_horarios y horarios_personalizados caen por ON DELETE CASCADE.
+        await conexion.query('DELETE FROM instructora_clase WHERE instructora_id = ?', [instructoraId]);
+        await conexion.query('DELETE FROM instructoras WHERE id = ?', [instructoraId]);
+      }
+
+      await conexion.query('DELETE FROM usuarios WHERE id = ?', [id]);
+      await conexion.commit();
+    } catch (err) {
+      await conexion.rollback();
+      throw err;
+    } finally {
+      conexion.release();
+    }
+
+    console.log(`🗑️ Cuenta eliminada: #${id} (${usuario.username})`);
+    res.json({
+      message: `Cuenta de ${usuario.nombre} ${usuario.apellido} eliminada correctamente`,
+      id: Number(id),
+    });
+  } catch (err) {
+    console.error('Error al eliminar usuario:', err);
+    res.status(500).json({ error: 'Error al eliminar la cuenta' });
+  }
+});
+
 // Actualizar nivel del usuario
 router.patch('/update-nivel/:id', async (req, res) => {
   const { id } = req.params;
