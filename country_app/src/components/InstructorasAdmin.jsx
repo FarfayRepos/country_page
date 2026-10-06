@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import ReactDOM from "react-dom";
-import { Loader, UserPlus, Edit, Trash2, Calendar, Clock, Search, CheckCircle, Coffee, Mail, Phone, Award, MoreVertical, Unlock, SlidersHorizontal, Info, GraduationCap } from "lucide-react";
+import { Loader, UserPlus, Edit, Trash2, Calendar, Clock, Search, CheckCircle, Coffee, Mail, Phone, Award, MoreVertical, Unlock, SlidersHorizontal, Info, GraduationCap, Send } from "lucide-react";
 
 const InstructorasAdmin = () => {
   const [instructoras, setInstructoras] = useState([]);
@@ -29,6 +29,7 @@ const InstructorasAdmin = () => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0, instructorId: null });
   const [deletingInstructor, setDeletingInstructor] = useState(false);
+  const [resendingId, setResendingId] = useState(null);
 
   // Estados para el flujo de desactivación + reasignación de reservas
   const [activeReservations, setActiveReservations] = useState([]);
@@ -865,6 +866,48 @@ const InstructorasAdmin = () => {
     }
   };
 
+  // Reenviar las credenciales de acceso al correo de la instructora
+  const resendCredentials = async (instructor) => {
+    if (!instructor.correo) {
+      showNotification("La instructora no tiene correo registrado. Edítala primero.", "error");
+      return;
+    }
+    if (!instructor.usuario_id) {
+      showNotification("La instructora no tiene un usuario asociado.", "error");
+      return;
+    }
+
+    const confirmar = window.confirm(
+      `¿Reenviar las credenciales de acceso a ${instructor.correo}?`
+    );
+    if (!confirmar) return;
+
+    setResendingId(instructor.id);
+    try {
+      const response = await fetch(
+        `https://elrefugiocountryclub.com/api/api/users/resend-credentials/${instructor.usuario_id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        showNotification(`Credenciales reenviadas a ${data?.email || instructor.correo}`, "success");
+      } else {
+        showNotification("Error al reenviar credenciales: " + (data?.error ?? "Error desconocido"), "error");
+      }
+    } catch (error) {
+      console.error("Error al reenviar credenciales:", error);
+      showNotification("Error de conexión. Inténtalo de nuevo.", "error");
+    } finally {
+      setResendingId(null);
+    }
+  };
+
   // Funciones para gestión de descansos
   const openDescansosModal = async (instructor) => {
     setSelectedInstructorDescansos(instructor);
@@ -1455,7 +1498,7 @@ const InstructorasAdmin = () => {
                                   setOpenMenuId(null);
                                 } else {
                                   const rect = e.currentTarget.getBoundingClientRect();
-                                  const menuH = 230;
+                                  const menuH = 290;
                                   const below = window.innerHeight - rect.bottom;
                                   setMenuPos({
                                     top: below >= menuH ? rect.bottom + 4 : undefined,
@@ -1514,6 +1557,18 @@ const InstructorasAdmin = () => {
                 <div className="inst-menu-item-text">
                   <span>Editar</span>
                   <small>Modificar datos personales</small>
+                </div>
+              </button>
+              <button
+                className="inst-menu-item"
+                disabled={!inst.correo || resendingId === inst.id}
+                title={inst.correo ? `Reenviar credenciales a ${inst.correo}` : "Sin correo registrado"}
+                onClick={() => { resendCredentials(inst); setOpenMenuId(null); }}
+              >
+                {resendingId === inst.id ? <Loader size={15} className="spin" /> : <Send size={15} />}
+                <div className="inst-menu-item-text">
+                  <span>{resendingId === inst.id ? "Enviando..." : "Reenviar credenciales"}</span>
+                  <small>{inst.correo ? "Enviar acceso por correo" : "Sin correo registrado"}</small>
                 </div>
               </button>
               <button className="inst-menu-item inst-menu-item-danger" onClick={() => { openDeleteModal(inst); setOpenMenuId(null); }}>

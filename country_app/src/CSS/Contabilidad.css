@@ -4960,6 +4960,16 @@ body.no-scroll {
 .inst-menu-item:nth-child(1) svg { background: #9caf88; }
 .inst-menu-item:nth-child(2) svg { background: #5a9bd5; }
 .inst-menu-item:nth-child(4) svg { background: #c17b4a; }
+.inst-menu-item:nth-child(5) svg { background: #8b6f4e; }
+
+.inst-menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inst-menu-item:disabled:hover {
+  background: none;
+}
 
 .inst-menu-item:hover {
   background: #faf8f5;
